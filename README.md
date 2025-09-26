@@ -1,6 +1,8 @@
 # TemporalMixtureModels.jl
 Temporal mixture models for aligned univariate and multivariate time series data. 
 
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://max-de-rooij.github.io/TemporalMixtureModels.jl/dev)
+
 (C) Max de Rooij, 2025
 
 To do:
