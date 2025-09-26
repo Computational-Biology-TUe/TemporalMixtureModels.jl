@@ -1,8 +1,9 @@
+
 """
 Run bootstrap resampling to estimate confidence intervals for the coefficients of each component in a mixture model.
 
 ## Arguments
-- `model::UnivariateMixtureModel{T}`: The fitted univariate mixture model
+- `model::AbstractMixtureModel{T}`: The fitted mixture model
 - `df::DataFrame`: The input DataFrame containing the data.
 
 ### Optional keyword arguments
@@ -12,10 +13,20 @@ Run bootstrap resampling to estimate confidence intervals for the coefficients o
 - `prog::Bool=true`: Whether to show a progress bar.
 
 ## Returns
+
+### In case of a univariate mixture model
 - `ci_results::Vector{Dict{Symbol, Any}}`: A vector where each element corresponds to a component and contains a dictionary with keys `:lower` and `:upper` for the confidence intervals of the coefficients.
 - `component_samples::Vector{Vector{Vector{T}}}`: A vector where each element corresponds to a component and contains a vector of coefficient samples from the bootstrap resampling.
+
+### In case of a multivariate mixture model
+- `ci_results::Vector{Dict{Symbol, Any}}`: A vector where each element corresponds to a component and contains a dictionary. Each dictionary has variable names as keys and values are tuples with keys `:lower` and `:upper` for the confidence intervals of the coefficients for that variable.
+- `component_samples::Vector{Dict{Symbol, Vector{Vector{T}}}}`: A vector where each element corresponds to a component and contains a dictionary. Each dictionary has variable names as keys and values are vectors of coefficient samples from the bootstrap resampling for that variable.
 """
-function bootstrap_ci(model::UnivariateMixtureModel{T}, df::DataFrame; n_bootstrap::Int=100, alpha::Float64=0.05, rng::AbstractRNG=Random.GLOBAL_RNG, prog::Bool = true) where T
+function bootstrap_ci(model::AbstractMixtureModel{T}, df::DataFrame; n_bootstrap::Int=100, alpha::Float64=0.05, rng::AbstractRNG=Random.GLOBAL_RNG, prog::Bool = true) where T
+    _run_bootstrap_ci(model, df; n_bootstrap=n_bootstrap, alpha=alpha, rng=rng, prog=prog)
+end
+
+function _run_bootstrap_ci(model::UnivariateMixtureModel{T}, df::DataFrame; n_bootstrap::Int=100, alpha::Float64=0.05, rng::AbstractRNG=Random.GLOBAL_RNG, prog::Bool = true) where T
     X = _prepare_data(df)
     n = length(X.ids)
     n_components = length(model.components)
@@ -87,25 +98,7 @@ function match_components!(model::MultivariateMixtureModel{T}, reference::Multiv
     return model
 end
 
-
-"""
-Run bootstrap resampling to estimate confidence intervals for the coefficients of each component in a multivariate mixture model.
-
-## Arguments
-- `model::MultivariateMixtureModel{T}`: The fitted multivariate mixture model
-- `df::DataFrame`: The input DataFrame containing the data.
-
-### Optional keyword arguments
-- `n_bootstrap::Int=100`: Number of bootstrap samples to draw.
-- `alpha::Float64=0.05`: Significance level for the confidence intervals (e.g., 0.05 for 95% CI).
-- `rng::AbstractRNG=Random.GLOBAL_RNG`: Random number generator to use.
-- `prog::Bool=true`: Whether to show a progress bar.
-
-## Returns
-- `ci_results::Vector{Dict{Symbol, Any}}`: A vector where each element corresponds to a component and contains a dictionary. Each dictionary has variable names as keys and values are tuples with keys `:lower` and `:upper` for the confidence intervals of the coefficients for that variable.
-- `component_samples::Vector{Dict{Symbol, Vector{Vector{T}}}}`: A vector where each element corresponds to a component and contains a dictionary. Each dictionary has variable names as keys and values are vectors of coefficient samples from the bootstrap resampling for that variable.
-"""
-function bootstrap_ci(model::MultivariateMixtureModel{T}, df::DataFrame; n_bootstrap::Int=100, alpha::Float64=0.05, rng::AbstractRNG=Random.GLOBAL_RNG, prog::Bool = true) where T
+function _run_bootstrap_ci(model::MultivariateMixtureModel{T}, df::DataFrame; n_bootstrap::Int=100, alpha::Float64=0.05, rng::AbstractRNG=Random.GLOBAL_RNG, prog::Bool = true) where T
     X = _prepare_data(df)
     n = length(X.ids)
     n_components = length(model.components)

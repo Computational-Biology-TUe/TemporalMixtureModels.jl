@@ -12,8 +12,8 @@ To do:
 - [x] implement conversion from dataframe to internal data structure
 - [x] implement bootstrap uncertainty estimation
 - [x] create GitHub repository
-- [ ] write documentation (docstrings and docs)
-- [ ] create examples
+- [x] write documentation (docstrings and docs)
+- [x] create examples
 - [ ] add tests
 - [ ] infer lower bounds for compatibility with older Julia versions and packages
 - [ ] set up CI/CD with GitHub Actions

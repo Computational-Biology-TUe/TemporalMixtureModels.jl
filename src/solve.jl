@@ -160,7 +160,7 @@ end
 # Main fit function
 # ============================================================
 
-function fit!(model::AbstractMixtureModel, X::MixtureData; rng::AbstractRNG=Random.default_rng(), verbose::Bool=true, max_iter::Int=100, tol::Real=1e-6, hard_assignment::Bool=true)
+function fit!(model::AbstractMixtureModel, X::MixtureData; rng::AbstractRNG=Random.default_rng(), verbose::Bool=true, max_iter::Int=100, tol::Real=1e-6, hard_assignment::Bool=false)
 
     init_em!(model, X; rng=rng)
     id_idx = get_id_idx(X)
@@ -185,7 +185,7 @@ function fit!(model::AbstractMixtureModel, X::MixtureData; rng::AbstractRNG=Rand
                 println("Converged after $it iterations with log-likelihood: $LL")
             end
 
-            return model, variances
+            return model
         end
         model.log_likelihood = LL
 
@@ -208,9 +208,21 @@ end
 """
 Fit a mixture model to the given DataFrame.
 
+## Usage
+```julia
+fit!(model, df, [id_col], [time_col], [value_col], [var_name_col]; kwargs...)
+```
+
 ## Arguments
 - `model::AbstractMixtureModel`: The mixture model to fit.
 - `df::DataFrame`: The input data.
+
+### Optional Keyword Arguments
+- `id_col::String="id"`: The name of the column containing individual IDs.
+- `time_col::String="time"`: The name of the column containing time points.
+- `value_col::String="value"`: The name of the column containing observed values.
+- `var_name_col::String="var_name"`: The name of the column containing variable, can be ignored for univariate data.
+- `kwargs...`: Additional keyword arguments passed to the internal `fit!` function.
 
 ## Example
 ```julia

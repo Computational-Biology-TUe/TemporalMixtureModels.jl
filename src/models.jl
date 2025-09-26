@@ -30,20 +30,22 @@ end
 mutable struct PolynomialRegression{T<:Real} <: AbstractRegressionModel{T}
     degree::Int
     coefficients::Vector{T}
+end
 
-    """
-    Create a polynomial regression mixture model component of specified degree.
+"""
+Create a polynomial regression mixture model component of specified degree.
 
-    ## Arguments
-    - `degree::Int`: Degree of the polynomial.
+## Arguments
+- `degree::Int`: Degree of the polynomial.
 
-    ## Example
-    Creating a polynomial regression model of degree 2:
-    ```julia
-    model = PolynomialRegression(2)
-    ```
-    """
-    PolynomialRegression(degree::Int) = new{Float64}(degree, zeros(Float64, degree + 1))
+## Example
+Creating a polynomial regression model of degree 2:
+```julia
+model = PolynomialRegression(2)
+```
+"""
+function PolynomialRegression(degree::Int)
+    return PolynomialRegression{Float64}(degree, zeros(Float64, degree + 1))
 end
 
 function basis(t::AbstractVector{T}, degree::Int) where T<:Real
@@ -76,20 +78,25 @@ mutable struct RidgePolynomialRegression{T<:Real} <: AbstractRegressionModel{T}
     coefficients::Vector{T}
     lambda::T
 
-    """
-    Create a ridge (L2) polynomial regression mixture model component of specified degree and regularization parameter.
+end
 
-    ## Arguments
-    - `degree::Int`: Degree of the polynomial.
-    - `lambda::T`: Regularization parameter (L2 penalty).
 
-    ## Example
-    Creating a ridge polynomial regression model of degree 2 with lambda = 0.1:
-    ```julia
-    model = RidgePolynomialRegression(2, 0.1)
-    ```
-    """
-    RidgePolynomialRegression(degree::Int, lambda::T) where T<:Real = new{T}(degree, zeros(T, degree + 1), lambda)
+"""
+Create a ridge (L2) polynomial regression mixture model component of specified degree and regularization parameter.
+
+## Arguments
+- `degree::Int`: Degree of the polynomial.
+- `lambda::T`: Regularization parameter (L2 penalty).
+
+## Example
+Creating a ridge polynomial regression model of degree 2 with lambda = 0.1:
+```julia
+model = RidgePolynomialRegression(2, 0.1)
+```
+"""
+function RidgePolynomialRegression(degree::Int, lambda)
+    lambda = convert(Float64, lambda)
+    return RidgePolynomialRegression{Float64}(degree, zeros(Float64, degree + 1), lambda)
 end
 
 function fit!(model::RidgePolynomialRegression, t::AbstractVector, y::AbstractVector)
@@ -112,21 +119,25 @@ mutable struct LassoPolynomialRegression{T<:Real} <: AbstractRegressionModel{T}
     degree::Int
     coefficients::Vector{T}
     lambda::T
+end
 
-    """
-    Create a lasso (L1) polynomial regression mixture model component of specified degree and regularization parameter.
 
-    ## Arguments
-    - `degree::Int`: Degree of the polynomial.
-    - `lambda::T`: Regularization parameter (L1 penalty).
+"""
+Create a lasso (L1) polynomial regression mixture model component of specified degree and regularization parameter.
 
-    ## Example
-    Creating a lasso polynomial regression model of degree 2 with lambda = 0.1:
-    ```julia
-    model = LassoPolynomialRegression(2, 0.1)
-    ```
-    """
-    LassoPolynomialRegression(degree::Int, lambda::T) where T<:Real = new{T}(degree, zeros(T, degree + 1), lambda)
+## Arguments
+- `degree::Int`: Degree of the polynomial.
+- `lambda::T`: Regularization parameter (L1 penalty).
+
+## Example
+Creating a lasso polynomial regression model of degree 2 with lambda = 0.1:
+```julia
+model = LassoPolynomialRegression(2, 0.1)
+```
+"""
+function LassoPolynomialRegression(degree::Int, lambda)
+    lambda = convert(Float64, lambda)
+    return LassoPolynomialRegression{Float64}(degree, zeros(Float64, degree + 1), lambda)
 end
 
 function _fit_lasso_model(Ξ, y, lambda)

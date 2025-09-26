@@ -12,8 +12,6 @@ end
 
 
 """
-UnivariateMixtureModel(n_components::Int, component::AbstractMixtureModelComponent{T}) where T
-
 Create a univariate mixture model with `n_components` where each component is defined as the model passed in `component`. 
 
 ## Arguments
@@ -22,8 +20,11 @@ Create a univariate mixture model with `n_components` where each component is de
 
 A univariate mixture model is defined as:
 
-``y_i(t) \\sim \\sum_{k=1}^{K} \\pi_k f(y_i(t) | t, \\theta_k)``
-where `f(y_i(t) | t, \\theta_k)` is the density defined by the regression model (e.g., polynomial regression) with parameters `\\theta_k`, and `\\pi_k` are the mixture weights and `t` is time.
+```math
+y_i(t) \\sim \\sum_{k=1}^{K} \\pi_k f(y_i(t) | t, \\theta_k)
+```
+
+where ``f(y_i(t) | t, \\theta_k)`` is the density defined by the regression model (e.g., polynomial regression) with parameters ``\\theta_k``, and ``\\pi_k`` are the mixture weights and ``t`` is time.
 
 ## Example
 Creating a univariate mixture model with 3 components, each a polynomial of degree 2:
@@ -48,8 +49,6 @@ mutable struct MultivariateMixtureModel{T<:Real} <: AbstractMixtureModel{T}
 end
 
 """
-MultivariateMixtureModel(n_components::Int, components::Dict{Symbol, <:AbstractMixtureModelComponent{T}}) where T
-
 Create a multivariate mixture model with `n_components` where each component is defined by the models passed in the `components` dictionary.
 ## Arguments
 - `n_components::Int`: Number of mixture components. 
@@ -57,8 +56,10 @@ Create a multivariate mixture model with `n_components` where each component is 
 
 In this case, a multivariate mixture model is defined using *independent* components as:
 
-``(y_{i1}, y_{i2}, ..., y_{iJ}) \\sim \\sum_{k=1}^{K} \\pi_k \\prod_{j = 1}^{J} f_j(y_{ij} | t, \\theta_{kj})``
-where `f_j(y_{ij} | t, \\theta_{kj})` is the density defined by the regression model for variable `j` with parameters `\\theta_{kj}`, and `\\pi_k` are the mixture weights.
+```math
+(y_{i1}, y_{i2}, ..., y_{iJ}) \\sim \\sum_{k=1}^{K} \\pi_k \\prod_{j = 1}^{J} f_j(y_{ij} | t, \\theta_{kj})
+```
+where ``f_j(y_{ij} | t, \\theta_{kj})`` is the density defined by the regression model for variable ``j``` with parameters ``\\theta_{kj}``, and ``\\pi_k`` are the mixture weights.
 
 It is assumed that the variables are independent given the component assignment, i.e., the joint density is the product of the individual densities.
 
@@ -81,6 +82,7 @@ end
 
 function reinit!(model::UnivariateMixtureModel{T}) where T
     model.weights .= T(1.0) / n_components(model)
+    model.variances .= 1.0
     model.log_likelihood = T(-Inf)
     model.converged = false
     model.iterations = 0
@@ -91,6 +93,7 @@ end
 
 function reinit!(model::MultivariateMixtureModel{T}) where T
     model.weights .= T(1.0) / n_components(model)
+    model.variances .= 1.0
     model.log_likelihood = T(-Inf)
     model.converged = false
     model.iterations = 0
@@ -103,12 +106,12 @@ end
 
 function duplicate(model::UnivariateMixtureModel{T}) where T
     new_components = [deepcopy(comp) for comp in model.components]
-    return UnivariateMixtureModel{T}(new_components, model.weights, model.log_likelihood, model.converged, model.iterations)
+    return UnivariateMixtureModel{T}(new_components, model.weights, model.variances, model.log_likelihood, model.converged, model.iterations)
 end
 
 function duplicate(model::MultivariateMixtureModel{T}) where T
     new_components = [ComponentDict{T}(deepcopy(comp_dict)) for comp_dict in model.components]
-    return MultivariateMixtureModel{T}(new_components, model.weights, model.log_likelihood, model.converged, model.iterations)
+    return MultivariateMixtureModel{T}(new_components, model.weights, model.variances, model.log_likelihood, model.converged, model.iterations)
 end
 
 function log_likelihoods(model::UnivariateMixtureModel{T}, X::UnivariateMixtureData) where T
@@ -147,9 +150,9 @@ Predict the values at given timepoints for each component of the mixture model f
 - `timepoints::Vector{T}`: A vector of timepoints at which to predict
 
 ## Returns
-A matrix of size (length(timepoints), n_components) where each column corresponds to the predictions from one component.
+A matrix of size `(length(timepoints), n_components)` where each column corresponds to the predictions from one component.
 """
-function predict(model::UnivariateMixtureModel{T}, timepoints::Vector{T}) where T
+function predict(model::UnivariateMixtureModel{T}, timepoints::AbstractVector{T}) where T
     n = length(timepoints)
     n_comp = n_components(model)
     preds = zeros(T, n, n_comp)
@@ -167,9 +170,9 @@ Predict the values at given timepoints for each component of the mixture model f
 - `timepoints::Vector{T}`: A vector of timepoints at which to predict
 
 ## Returns
-A dictionary where keys are variable names (as `Symbol`) and values are matrices of size (length(timepoints), n_components) where each column corresponds to the predictions from one component for that variable.
+A dictionary where keys are variable names (as `Symbol`) and values are matrices of size `(length(timepoints), n_components)` where each column corresponds to the predictions from one component for that variable.
 """
-function predict(model::MultivariateMixtureModel{T}, timepoints::Vector{T}) where T
+function predict(model::MultivariateMixtureModel{T}, timepoints::AbstractVector{T}) where T
     n = length(timepoints)
     n_comp = n_components(model)
     preds = Dict{Symbol, Matrix{T}}()
