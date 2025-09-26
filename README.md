@@ -12,7 +12,6 @@ To do:
 - [x] implement conversion from dataframe to internal data structure
 - [x] implement bootstrap uncertainty estimation
 - [x] create GitHub repository
-- [ ] add posterior predictive intervals
 - [ ] write documentation (docstrings and docs)
 - [ ] create examples
 - [ ] add tests

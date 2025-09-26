@@ -50,7 +50,7 @@ function UnivariateGroupedTimeSeries(data)
     return UnivariateGroupedTimeSeries(grouped, timepoints)
 end
 
-function MultivariateGroupedTimeSeries(data, variables)
+function MultivariateGroupedTimeSeries(data::Dict{Symbol, <:TimedVector}, variables::Vector{Symbol})
     grouped = Dict{Tuple{Int,Symbol}, SubArray}()
     timepoints = Dict{Tuple{Int,Symbol}, SubArray}()
     for var in variables

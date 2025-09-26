@@ -4,13 +4,15 @@ module TemporalMixtureModels
     using DataFrames: DataFrame
     import LinearSolve as LS
     import Convex, SCS
+    using ProgressMeter
+    using Hungarian: hungarian
     include("input.jl")
     include("models.jl")
     include("mixturemodel.jl")
     include("solve.jl")
     include("uncertainty.jl")
 
-    export UnivariateMixtureData, MultivariateMixtureData, UnivariateMixtureModel, MultivariateMixtureModel
+    export UnivariateMixtureModel, MultivariateMixtureModel
     export PolynomialRegression, RidgePolynomialRegression, LassoPolynomialRegression
     export fit!, predict, bootstrap_ci
 end
@@ -19,7 +21,7 @@ end
 using .TemporalMixtureModels, DataFrames
 
 # create a univariate dataset
-individuals_per_group = 10
+individuals_per_group = 20
 t_values = 0:0.1:10
 n_groups = 2
 group_coefficients_1 = [ [2.0, -0.5, 0.05],  # Group 1: y = 2 - 0.5*t + 0.05*t^2
@@ -54,7 +56,7 @@ model = MultivariateMixtureModel(2, components)
 # fit the model to the data
 TemporalMixtureModels.fit!(model, input_data; verbose=false, max_iter=100, tol=1e-9, hard_assignment=false)
 
-cis = TemporalMixtureModels.bootstrap_ci(model, input_data; n_bootstrap=50, alpha=0.05)
+cis, samples = TemporalMixtureModels.bootstrap_ci(model, input_data; n_bootstrap=500, alpha=0.05)
 
 
 println("Log-likelihood: ", model.log_likelihood)
@@ -62,7 +64,9 @@ println("Converged: ", model.converged)
 # print the fitted coefficients
 for (i, comp) in enumerate(model.components)
     for (var, model) in comp
-        println("Component $i, Variable $var coefficients: ", model.coefficients)
+        confidence_bounds = cis[i][var]
+        coefficients = ["$coeff ($lower, $upper)" for (coeff, lower, upper) in zip(model.coefficients, confidence_bounds.lower, confidence_bounds.upper)]
+        println("Component $i, Variable $var coefficients: ", coefficients)
     end
 end
 

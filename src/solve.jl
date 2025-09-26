@@ -59,9 +59,15 @@ function get_id_idx(X::MultivariateMixtureData)
     for var in X.variables)
 end
 
-function e_step!(Γ, model::AbstractMixtureModel, variances, X::MixtureData)
-    likelihoods = log_likelihoods(model, X, variances)
+function e_step!(Γ, model::AbstractMixtureModel, X::MixtureData)
+    likelihoods = log_likelihoods(model, X)
     return total_loglikelihood(likelihoods), responsibilites!(Γ, likelihoods)
+end
+
+function class_probabilities(model::AbstractMixtureModel, df::DataFrame)
+    X = _prepare_data(df)
+    likelihoods = log_likelihoods(model, X)
+    return responsibilites(likelihoods)
 end
 
 # ============================================================
@@ -71,7 +77,6 @@ function init_em!(model::UnivariateMixtureModel, X::UnivariateMixtureData; rng::
 
     # randomly assign individuals to components
     assignments = rand(rng, 1:n_components(model), length(X.ids))
-    variances = zeros(n_components(model))
 
     # initialize coefficients for each component
     for k in 1:n_components(model)
@@ -86,13 +91,11 @@ function init_em!(model::UnivariateMixtureModel, X::UnivariateMixtureData; rng::
             randinit!(model.components[k], rng)  # Random initialization if not enough samples
         end
         # initialize variances
-        variances[k] = variance(model.components[k], samples.t, samples.y)
+        model.variances[k] = variance(model.components[k], samples.t, samples.y)
     end
-    
-    return variances
 end
 
-function m_step!(model::UnivariateMixtureModel, X::UnivariateMixtureData, variances, Γ, id_idx, n_k; rng=Random.default_rng())
+function m_step!(model::UnivariateMixtureModel, X::UnivariateMixtureData, Γ, id_idx, n_k; rng=Random.default_rng())
     # update coefficients and variances
     for k in 1:n_components(model)
         Wv = [Γ[id_idx[i], k] for i in 1:length(X.data)]
@@ -103,7 +106,7 @@ function m_step!(model::UnivariateMixtureModel, X::UnivariateMixtureData, varian
             # If no samples assigned to this component, reinitialize
             randinit!(model.components[k], rng)
         end
-        variances[k] = variance(model.components[k], X.data.t, X.data.y)
+        model.variances[k] = variance(model.components[k], X.data.t, X.data.y)
     end
 end
 
@@ -115,7 +118,6 @@ function init_em!(model::MultivariateMixtureModel, X::MultivariateMixtureData; r
 
     # randomly assign individuals to components
     assignments = rand(rng, 1:n_components(model), length(X.ids))
-    variances = zeros(length(X.variables), n_components(model))
 
     for (i, var) in enumerate(X.variables)
         # initialize coefficients for each component
@@ -130,13 +132,12 @@ function init_em!(model::MultivariateMixtureModel, X::MultivariateMixtureData; r
                 randinit!(model.components[k][var], rng)  # Random initialization if not enough samples
             end
             # initialize variances
-            variances[i,k] = variance(model.components[k][var], samples.t, samples.y)
+            model.variances[i,k] = variance(model.components[k][var], samples.t, samples.y)
         end
     end
-    return variances
 end
 
-function m_step!(model::MultivariateMixtureModel, X::MultivariateMixtureData, variances, Γ, id_idx, n_k; rng=Random.default_rng())
+function m_step!(model::MultivariateMixtureModel, X::MultivariateMixtureData, Γ, id_idx, n_k; rng=Random.default_rng())
     # update coefficients and variances
     for (i, var) in enumerate(X.variables)
         # initialize coefficients for each component
@@ -150,7 +151,7 @@ function m_step!(model::MultivariateMixtureModel, X::MultivariateMixtureData, va
                 # If no samples assigned to this component, reinitialize
                 randinit!(model.components[k][var], rng)
             end
-            variances[i, k] = variance(model.components[k][var], samples.t, samples.y)
+            model.variances[i, k] = variance(model.components[k][var], samples.t, samples.y)
         end
     end
 end
@@ -161,13 +162,13 @@ end
 
 function fit!(model::AbstractMixtureModel, X::MixtureData; rng::AbstractRNG=Random.default_rng(), verbose::Bool=true, max_iter::Int=100, tol::Real=1e-6, hard_assignment::Bool=true)
 
-    variances = init_em!(model, X; rng=rng)
+    init_em!(model, X; rng=rng)
     id_idx = get_id_idx(X)
     Γ = zeros(length(X.ids), n_components(model))
 
     for it in 1:max_iter
         # E-step
-        LL, Γ = e_step!(Γ, model, variances, X)
+        LL, Γ = e_step!(Γ, model, X)
 
         if hard_assignment
             assignments = argmax(Γ, dims=2)
@@ -193,17 +194,30 @@ function fit!(model::AbstractMixtureModel, X::MixtureData; rng::AbstractRNG=Rand
         model.weights = n_k ./ length(X.ids)
 
         # M-step
-        m_step!(model, X, variances, Γ, id_idx, n_k; rng=rng)
+        m_step!(model, X, Γ, id_idx, n_k; rng=rng)
     end
     model.iterations = max_iter
     if verbose
         println("Reached maximum iterations ($max_iter) without convergence. Final log-likelihood: $model.log_likelihood")
     end
 
-    return model, variances
+    return model
 
 end
 
+"""
+Fit a mixture model to the given DataFrame.
+
+## Arguments
+- `model::AbstractMixtureModel`: The mixture model to fit.
+- `df::DataFrame`: The input data.
+
+## Example
+```julia
+model = UnivariateMixtureModel(2, PolynomialRegression(2))
+fit!(model, df)
+```
+"""
 function fit!(model::AbstractMixtureModel, df::DataFrame;
     id_col = "id", time_col = "time", value_col = "value", var_name_col = "var_name", kwargs...)
     X = _prepare_data(df, id_col=id_col, time_col=time_col, value_col=value_col, var_name_col=var_name_col)
