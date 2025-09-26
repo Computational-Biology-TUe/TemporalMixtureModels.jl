@@ -14,9 +14,9 @@ To do:
 - [x] create GitHub repository
 - [x] write documentation (docstrings and docs)
 - [x] create examples
-- [ ] add tests
+- [x] add basic tests
 - [ ] infer lower bounds for compatibility with older Julia versions and packages
 - [ ] set up CI/CD with GitHub Actions
-- [ ] create animated GIF to illustrate fitting process for the README
+- [ ] add example for custom component models
 - [ ] register package with JuliaRegistries
 - [ ] add functionality for missing data

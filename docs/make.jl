@@ -1,0 +1,24 @@
+using Documenter
+using TemporalMixtureModels
+
+push!(LOAD_PATH, "../src/")
+
+makedocs(
+    sitename="TemporalMixtureModels.jl",
+    pages= [
+        "Getting Started" => "index.md",
+        "Tutorials" => [
+            "Univariate" => "tutorials/univariate.md",
+            "Multivariate" => "tutorials/multivariate.md",
+            ],
+        "Manual" => [
+            "Model Components" => "api/components.md",
+            "Mixture Models" => "api/mixtures.md",
+            "Fitting Models" => "api/fitting.md",
+        ]
+    ]
+    )
+
+deploydocs(
+    repo = "github.com/max-de-rooij/TemporalMixtureModels.jl.git",
+)

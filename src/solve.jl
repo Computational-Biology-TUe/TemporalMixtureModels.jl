@@ -165,6 +165,7 @@ function fit!(model::AbstractMixtureModel, X::MixtureData; rng::AbstractRNG=Rand
     init_em!(model, X; rng=rng)
     id_idx = get_id_idx(X)
     Γ = zeros(length(X.ids), n_components(model))
+    model.converged = false
 
     for it in 1:max_iter
         # E-step

@@ -1,1 +1,9 @@
-println("I should write tests for this.")
+using TemporalMixtureModels, DataFrames, Random, Test
+
+@testset "Univariate Mixture Models" begin
+    include("univariate.jl")
+end
+
+@testset "Multivariate Mixture Models" begin
+    include("multivariate.jl")
+end
