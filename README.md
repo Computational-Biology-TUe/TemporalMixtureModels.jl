@@ -3,22 +3,12 @@ Temporal mixture models for aligned univariate and multivariate time series data
 
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://computational-biology-tue.github.io/TemporalMixtureModels.jl/dev) [![tests](https://github.com/Computational-Biology-TUe/TemporalMixtureModels.jl/actions/workflows/tests.yml/badge.svg)](https://github.com/Computational-Biology-TUe/TemporalMixtureModels.jl/actions/workflows/tests.yml)
 
-(C) Max de Rooij, 2025
+## About
+TemporalMixtureModels.jl is a small Julia package for fitting temporal mixture models to cluster time series data. The package supports both univariate and independent multivariate time series data. The package provides a simple API for fitting models, making predictions, and estimating uncertainty using bootstrap methods. A temporal mixture model is a probabilistic model that assumes that the observed time series data is generated from a mixture of several underlying temporal processes. Each process is represented by a component model, and the overall model combines these components to explain the observed data. Temporal mixture models are particularly useful for clustering time series data, as they can capture the underlying patterns and variations in the data.
 
-To do:
-- [x] build basic API for fitting and predicting in the univariate case
-- [x] build basic API for fitting and predicting in the multivariate case
-- [x] implement polynomial regression model
-- [x] implement ridge regression model
-- [x] implement lasso regression model
-- [x] implement conversion from dataframe to internal data structure
-- [x] implement bootstrap uncertainty estimation
-- [x] create GitHub repository
-- [x] write documentation (docstrings and docs)
-- [x] create examples
-- [x] add basic tests
-- [x] set up CI/CD with GitHub Actions
-- [ ] add scaling of time variable
-- [ ] add example for custom component models
-- [ ] register package with JuliaRegistries
-- [ ] add functionality for missing data
+This package is still wildly in development. Breaking changes will come.
+
+> *“Time, the devourer of all things,  
+> and you, envious age, together you destroy all that is.”*  
+> — Ovid, *Metamorphoses*
+
