@@ -10,6 +10,9 @@ on:
     branches:
       - main
     tags: '*'
+    paths:
+      - src/**
+      - test/**
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
