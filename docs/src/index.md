@@ -32,5 +32,9 @@ While it is possible to implement custom component models, the package currently
 - Ridge (L2) regression
 - Lasso (L1) regression
 
+## Notice
+The package is still wildly in development. Breaking changes will come.
 
-
+> *“Time, the devourer of all things,  
+> and you, envious age, together you destroy all that is.”*  
+> — Ovid, *Metamorphoses*
