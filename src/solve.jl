@@ -77,7 +77,8 @@ function init_em!(model::UnivariateMixtureModel, X::UnivariateMixtureData; rng::
 
     # randomly assign individuals to components
     assignments = rand(rng, 1:n_components(model), length(X.ids))
-    responsibilites = zeros(length(X.ids), n_components(model))
+    model.weights .= 1.0 / n_components(model)
+    
     # initialize coefficients for each component
     for k in 1:n_components(model)
         ids_in_component = X.ids[assignments .== k]
@@ -93,10 +94,6 @@ function init_em!(model::UnivariateMixtureModel, X::UnivariateMixtureData; rng::
         # initialize variances
         model.variances[k] = variance(model.components[k], samples.t, samples.y)
     end
-
-    e_step!(responsibilites, model, X)
-    n_k = sum(responsibilites, dims=1)[:]
-    model.weights = n_k ./ length(X.ids)
 
 end
 
@@ -123,8 +120,9 @@ function init_em!(model::MultivariateMixtureModel, X::MultivariateMixtureData; r
 
     # randomly assign individuals to components
     assignments = rand(rng, 1:n_components(model), length(X.ids))
-    responsibilites = zeros(length(X.ids), n_components(model))
-
+    model.weights .= 1.0 / n_components(model)
+    
+     # initialize coefficients and variances
     for (i, var) in enumerate(X.variables)
         # initialize coefficients for each component
         for k in 1:n_components(model)
@@ -141,11 +139,6 @@ function init_em!(model::MultivariateMixtureModel, X::MultivariateMixtureData; r
             model.variances[i,k] = variance(model.components[k][var], samples.t, samples.y)
         end
     end
-
-    e_step!(responsibilites, model, X)
-    n_k = sum(responsibilites, dims=1)[:]
-    model.weights = n_k ./ length(X.ids)
-
 end
 
 function m_step!(model::MultivariateMixtureModel, X::MultivariateMixtureData, Γ, id_idx, n_k; rng=Random.default_rng())
