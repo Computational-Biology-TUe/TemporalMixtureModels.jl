@@ -101,14 +101,16 @@ function m_step!(model::UnivariateMixtureModel, X::UnivariateMixtureData, Γ, id
     # update coefficients and variances
     for k in 1:n_components(model)
         Wv = [Γ[id_idx[i], k] for i in 1:length(X.data)]
-        if n_k[k] > 1e-8
+        if n_k[k] > model.components[k].degree + 1
             # Fit polynomial with weights
             fit!(model.components[k], X.data.t, X.data.y, Wv)
+            model.variances[k] = variance(model.components[k], X.data.t, X.data.y, Wv)
         else
             # If no samples assigned to this component, reinitialize by fitting to all data
             fit!(model.components[k], X.data.t, X.data.y)
+            model.variances[k] = variance(model.components[k], X.data.t, X.data.y)
         end
-        model.variances[k] = variance(model.components[k], X.data.t, X.data.y, Wv)
+        
     end
 end
 
@@ -148,14 +150,16 @@ function m_step!(model::MultivariateMixtureModel, X::MultivariateMixtureData, Γ
         for k in 1:n_components(model)
             samples = X.data[var]
             Wv = [Γ[id_idx[var][i], k] for i in 1:length(samples)]
-            if n_k[k] > 1e-8
+            if n_k[k] > model.components[k][var].degree + 1
                 # Fit polynomial with weights
                 fit!(model.components[k][var], samples.t, samples.y, Wv)
+                model.variances[i, k] = variance(model.components[k][var], samples.t, samples.y, Wv)
             else
                 # If no samples assigned to this component, reinitialize by fitting to all data
                 fit!(model.components[k][var], samples.t, samples.y)
+                model.variances[i, k] = variance(model.components[k][var], samples.t, samples.y)
             end
-            model.variances[i, k] = variance(model.components[k][var], samples.t, samples.y, Wv)
+            
         end
     end
 end
