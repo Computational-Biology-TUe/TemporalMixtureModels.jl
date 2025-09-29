@@ -5,7 +5,7 @@ TemporalMixtureModels.jl is a small Julia package for fitting temporal mixture m
 Installation is straightforward using the Julia package manager. Open a Julia REPL and run:
 ```julia
 using Pkg
-Pkg.add("https://github.com/max-de-rooij/TemporalMixtureModels.jl")
+Pkg.add("https://github.com/Computational-Biology-TUe/TemporalMixtureModels.jl")
 ```
 
 ## Temporal Mixture Models
