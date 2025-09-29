@@ -18,6 +18,7 @@ To do:
 - [x] create examples
 - [x] add basic tests
 - [x] set up CI/CD with GitHub Actions
+- [ ] add scaling of time variable
 - [ ] add example for custom component models
 - [ ] register package with JuliaRegistries
 - [ ] add functionality for missing data

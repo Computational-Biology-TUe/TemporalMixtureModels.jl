@@ -20,5 +20,5 @@ makedocs(
     )
 
 deploydocs(
-    repo = "github.com/max-de-rooij/TemporalMixtureModels.jl.git",
+    repo = "github.com/Computational-Biology-TUe/TemporalMixtureModels.jl.git",
 )
