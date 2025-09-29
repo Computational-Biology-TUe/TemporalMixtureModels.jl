@@ -15,6 +15,12 @@ function variance(model::AbstractMixtureModelComponent{T}, t::AbstractVector{T},
 end
 
 function variance(model::AbstractMixtureModelComponent{T}, t::AbstractVector{T}, y::AbstractVector{T}, w::AbstractVector{T}) where T<:Real
+
+    if any(w .< 0.0)
+        @warn "Negative weight detected: $(w[w .< 0.0]), setting to zero."
+        w[w .< 0.0] .= 0.0
+    end
+
     residuals = y .- predict(model, t)
     return sum(w .* abs2.(residuals)) ./ (sum(w) - model.degree - 1)
 end
