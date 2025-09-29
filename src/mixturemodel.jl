@@ -72,7 +72,7 @@ model = MultivariateMixtureModel(2, components)
 """
 function MultivariateMixtureModel(n_components::Int, components::Dict{Symbol, <:AbstractMixtureModelComponent{T}}) where T
     components = [ComponentDict{T}(deepcopy(components)) for _ in 1:n_components]
-    variances = zeros(T, n_components, length(components[1]))
+    variances = zeros(T, length(components[1]), n_components)  # rows: variables, columns: components
     return MultivariateMixtureModel{T}(components, fill(one(T) / n_components, n_components), variances, -Inf, false, 0)
 end
 
