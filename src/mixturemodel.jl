@@ -106,21 +106,27 @@ end
 
 function duplicate(model::UnivariateMixtureModel{T}) where T
     new_components = [deepcopy(comp) for comp in model.components]
-    return UnivariateMixtureModel{T}(new_components, model.weights, model.variances, model.log_likelihood, model.converged, model.iterations)
+    return UnivariateMixtureModel{T}(new_components, copy(model.weights), copy(model.variances), model.log_likelihood, model.converged, model.iterations)
 end
 
 function duplicate(model::MultivariateMixtureModel{T}) where T
     new_components = [ComponentDict{T}(deepcopy(comp_dict)) for comp_dict in model.components]
-    return MultivariateMixtureModel{T}(new_components, model.weights, model.variances, model.log_likelihood, model.converged, model.iterations)
+    return MultivariateMixtureModel{T}(new_components, copy(model.weights), copy(model.variances), model.log_likelihood, model.converged, model.iterations)
 end
 
 function log_likelihoods(model::UnivariateMixtureModel{T}, X::UnivariateMixtureData) where T
     LLs = zeros(T, length(X.ids), n_components(model))
 
+    if any(model.weights .< 0.0)
+        @warn "Negative weight detected: $(model.weights[model.weights .< 0.0]), setting to zero."
+        model.weights[model.weights .< 0.0] .= 0.0
+    end
+
     for j in eachindex(X.ids)
         # Get the samples for this individual
         samples = X.grouped_view.data[X.ids[j]]
         timepoints = X.grouped_view.time[X.ids[j]]
+
         lls = [log_likelihood(model.components[k], timepoints, samples, model.variances[k]) + log(model.weights[k]) for k in 1:n_components(model)]
         LLs[j,:] .= lls
     end
@@ -129,6 +135,11 @@ end
 
 function log_likelihoods(model::MultivariateMixtureModel{T}, X::MultivariateMixtureData) where T
     LLs = zeros(T, length(X.ids), n_components(model))
+
+    if any(model.weights .< 0.0)
+        @warn "Negative weight detected: $(model.weights[model.weights .< 0.0]), setting to zero."
+        model.weights[model.weights .< 0.0] .= 0.0
+    end
 
     for (i,var) in enumerate(X.variables)
         for j in eachindex(X.ids)
