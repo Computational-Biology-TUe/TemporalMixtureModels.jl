@@ -2,12 +2,10 @@
 TemporalMixtureModels.jl is a small Julia package for fitting temporal mixture models to cluster time series data. The package supports both univariate and independent multivariate time series data. The package provides a simple API for fitting models, making predictions, and estimating uncertainty using bootstrap methods. 
 
 ## Installation
-The package is currently not registered in the Julia package registry. The package code is currently only accessible to the Computational Biology group at TU/e. Because of this, an SSH key setup through GitHub is required to install the package. To do this, follow the instructions on [(1) generating a new SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) and [(2) adding a new SSH key to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
-
-Subsequently, you'll be able to install the package over SSH in the Julia Pkg REPL:
+The package is currently not registered in the Julia package registry. While it is unregistered, you'll be able to install the package over SSH in the Julia Pkg REPL:
 
 ```julia
-pkg> add git@github.com:Computational-Biology-TUe/TemporalMixtureModels.jl.git
+pkg> add "git@github.com:Computational-Biology-TUe/TemporalMixtureModels.jl.git"
 ```
 
 ## Temporal Mixture Models
