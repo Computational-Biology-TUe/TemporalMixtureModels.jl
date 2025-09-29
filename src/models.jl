@@ -14,6 +14,11 @@ function variance(model::AbstractMixtureModelComponent{T}, t::AbstractVector{T},
     return sum(abs2, residuals) ./ (N - model.degree - 1)
 end
 
+function variance(model::AbstractMixtureModelComponent{T}, t::AbstractVector{T}, y::AbstractVector{T}, w::AbstractVector{T}) where T<:Real
+    residuals = y .- predict(model, t)
+    return sum(w .* abs2.(residuals)) ./ (sum(w) - model.degree - 1)
+end
+
 function predict(model::AbstractRegressionModel, t::AbstractVector)
     X = basis(t, model.degree)
     return X * model.coefficients

@@ -105,10 +105,10 @@ function m_step!(model::UnivariateMixtureModel, X::UnivariateMixtureData, Γ, id
             # Fit polynomial with weights
             fit!(model.components[k], X.data.t, X.data.y, Wv)
         else
-            # If no samples assigned to this component, reinitialize
-            randinit!(model.components[k], rng)
+            # If no samples assigned to this component, reinitialize by fitting to all data
+            fit!(model.components[k], X.data.t, X.data.y)
         end
-        model.variances[k] = variance(model.components[k], X.data.t, X.data.y)
+        model.variances[k] = variance(model.components[k], X.data.t, X.data.y, Wv)
     end
 end
 
@@ -152,10 +152,10 @@ function m_step!(model::MultivariateMixtureModel, X::MultivariateMixtureData, Γ
                 # Fit polynomial with weights
                 fit!(model.components[k][var], samples.t, samples.y, Wv)
             else
-                # If no samples assigned to this component, reinitialize
-                randinit!(model.components[k][var], rng)
+                # If no samples assigned to this component, reinitialize by fitting to all data
+                fit!(model.components[k][var], samples.t, samples.y)
             end
-            model.variances[i, k] = variance(model.components[k][var], samples.t, samples.y)
+            model.variances[i, k] = variance(model.components[k][var], samples.t, samples.y, Wv)
         end
     end
 end
@@ -182,7 +182,7 @@ function fit!(model::AbstractMixtureModel, X::MixtureData; rng::AbstractRNG=Rand
         end
 
         # Check convergence
-        if maximum(abs.(LL - model.log_likelihood)) < tol
+        if abs(LL - model.log_likelihood) < tol
             model.log_likelihood = LL
             model.converged = true
             model.iterations = it
@@ -196,7 +196,7 @@ function fit!(model::AbstractMixtureModel, X::MixtureData; rng::AbstractRNG=Rand
 
         # update mixing weights
         n_k = sum(Γ, dims=1)[:]
-        model.weights = n_k ./ length(X.ids)
+        model.weights = n_k ./ sum(n_k)
 
         # M-step
         m_step!(model, X, Γ, id_idx, n_k; rng=rng)
