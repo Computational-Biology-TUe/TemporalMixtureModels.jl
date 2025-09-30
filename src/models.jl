@@ -28,6 +28,10 @@ function randinit!(model::AbstractRegressionModel, rng=Random.default_rng())
     randn!(rng, model.coefficients)
 end
 
+function n_parameters(model::AbstractMixtureModelComponent)
+    return length(model.coefficients)
+end
+
 # ============================================================
 # Polynomial Regression Model
 # ============================================================
