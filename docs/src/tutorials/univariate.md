@@ -65,7 +65,7 @@ We can also compute the confidence intervals for the model parameters using boot
 ```@example univariate
 # Compute bootstrap confidence intervals
 n_bootstrap = 100  # Number of bootstrap samples
-confidence_intervals, _ = bootstrap_ci(model, input_data; n_bootstrap=n_bootstrap)
+confidence_intervals, _, _ = bootstrap_ci(model, input_data; n_bootstrap=n_bootstrap)
 confidence_intervals
 ```
 

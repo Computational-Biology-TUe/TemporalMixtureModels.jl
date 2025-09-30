@@ -70,7 +70,7 @@ As with the univariate case, we can also estimate the uncertainty of the fitted 
 ```@example multivariate
 # Compute bootstrap confidence intervals
 n_bootstrap = 100  # Number of bootstrap samples
-confidence_intervals, _ = bootstrap_ci(model, input_data; n_bootstrap=n_bootstrap)
+confidence_intervals, _, _ = bootstrap_ci(model, input_data; n_bootstrap=n_bootstrap)
 confidence_intervals
 ```
 

@@ -55,6 +55,10 @@ end
 
     @test length(model.components) == 2
 
+    # run bootstrap confidence intervals
+    ci_results, component_samples = bootstrap_ci(model, input_data, n_bootstrap=10)
+    @test length(ci_results) == 2
+
 end
 
 
