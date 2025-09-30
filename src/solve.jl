@@ -90,7 +90,7 @@ function init_em!(model::UnivariateMixtureModel, X::UnivariateMixtureData; rng::
         ids_set = Set(ids_in_component)
         samples = filter(x -> x.id in ids_set, X.data)
 
-        if length(samples) > model.components[k].degree + 1
+        if length(samples) > n_parameters(model.components[k])
             fit!(model.components[k], samples.t, samples.y)
         else
             randinit!(model.components[k], rng)  # Random initialization if not enough samples
@@ -105,7 +105,7 @@ function m_step!(model::UnivariateMixtureModel, X::UnivariateMixtureData, Γ, id
     # update coefficients and variances
     for k in 1:n_components(model)
         Wv = [Γ[id_idx[i], k] for i in 1:length(X.data)]
-        if n_k[k] > model.components[k].degree + 1
+        if n_k[k] > n_parameters(model.components[k])
             # Fit polynomial with weights
             fit!(model.components[k], X.data.t, X.data.y, Wv)
             model.variances[k] = variance(model.components[k], X.data.t, X.data.y, Wv)

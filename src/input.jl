@@ -143,7 +143,15 @@ function _df_to_univariate(df::DataFrame, id_col, time_col, value_col)
     if !(id_col in names(df)) || !(time_col in names(df)) || !(value_col in names(df))
         throw(ArgumentError("DataFrame must contain specified id, time and value columns"))
     end
-    meas = TimedVector(id = df[!,id_col], t = df[!,time_col], y = df[!,value_col])
+
+    idtype = eltype(promote(df[!,id_col]...))
+    valtype = eltype(promote(df[!,value_col]...))
+
+    ids = convert(Vector{idtype}, df[!,id_col])
+    t = convert(Vector{valtype}, df[!,time_col])
+    y = convert(Vector{valtype}, df[!,value_col])
+
+    meas = TimedVector(id = ids, t = t, y = y)
     return UnivariateMixtureData(meas)
 end
 
@@ -151,10 +159,14 @@ function _df_to_multivariate(df::DataFrame, id_col, time_col, var_name_col, valu
     if !(id_col in names(df)) || !(time_col in names(df)) || !(var_name_col in names(df)) || !(value_col in names(df))
         throw(ArgumentError("DataFrame must contain specified id, time, var_name and value columns"))
     end
+
+    idtype = eltype(promote(df[!,id_col]...))
+    valtype = eltype(promote(df[!,value_col]...))
+
     grouped = Dict{Symbol, TimedVector}()
     for var in unique(df[!, var_name_col])
         subset = df[df[!, var_name_col] .== var, :]
-        grouped[Symbol(var)] = TimedVector(id = subset[!,id_col], t = subset[!,time_col], y = subset[!,value_col])
+        grouped[Symbol(var)] = TimedVector(id = convert(Vector{idtype}, subset[!,id_col]), t = convert(Vector{valtype}, subset[!,time_col]), y = convert(Vector{valtype}, subset[!,value_col]))
     end
     return MultivariateMixtureData(grouped)
 end
