@@ -14,7 +14,7 @@ function total_loglikelihood(log_num::AbstractMatrix{T}) where T<:Real
     return ll
 end
 
-function responsibilites!(output::Matrix{T}, log_probs::Matrix{T}) where T
+function responsibilities!(output::Matrix{T}, log_probs::Matrix{T}) where T
     @inbounds for i in 1:size(log_probs, 1)
         row = view(log_probs, i, :)
         m = maximum(row)
@@ -30,7 +30,7 @@ function responsibilites!(output::Matrix{T}, log_probs::Matrix{T}) where T
     return output
 end
 
-function responsibilites(log_probs::Matrix{T}) where T
+function responsibilities(log_probs::Matrix{T}) where T
     output = zeros(T, size(log_probs))
     @inbounds for i in 1:size(log_probs, 1)
         row = view(log_probs, i, :)
@@ -61,13 +61,17 @@ end
 
 function e_step!(Γ, model::AbstractMixtureModel, X::MixtureData)
     likelihoods = log_likelihoods(model, X)
-    return total_loglikelihood(likelihoods), responsibilites!(Γ, likelihoods)
+    return total_loglikelihood(likelihoods), responsibilities!(Γ, likelihoods)
 end
 
-function class_probabilities(model::AbstractMixtureModel, df::DataFrame)
-    X = _prepare_data(df)
+function posterior_responsibilities(model::AbstractMixtureModel, X::MixtureData)
     likelihoods = log_likelihoods(model, X)
-    return responsibilites(likelihoods)
+    return responsibilities(likelihoods)
+end
+
+function posterior_responsibilities(model::AbstractMixtureModel, df::DataFrame)
+    X = _prepare_data(df)
+    posterior_responsibilities(model, X)
 end
 
 # ============================================================
