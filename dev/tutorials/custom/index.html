@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Implementing Custom Components · TemporalMixtureModels.jl</title><meta name="title" content="Implementing Custom Components · TemporalMixtureModels.jl"/><meta property="og:title" content="Implementing Custom Components · TemporalMixtureModels.jl"/><meta property="twitter:title" content="Implementing Custom Components · TemporalMixtureModels.jl"/><meta name="description" content="Documentation for TemporalMixtureModels.jl."/><meta property="og:description" content="Documentation for TemporalMixtureModels.jl."/><meta property="twitter:description" content="Documentation for TemporalMixtureModels.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="TemporalMixtureModels.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">TemporalMixtureModels.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Getting Started</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../univariate/">Univariate</a></li><li><a class="tocitem" href="../multivariate/">Multivariate</a></li><li class="is-active"><a class="tocitem" href>Implementing Custom Components</a><ul class="internal"><li><a class="tocitem" href="#Generating-some-synthetic-data"><span>Generating some synthetic data</span></a></li><li><a class="tocitem" href="#Defining-the-Custom-ODE-Model-Component"><span>Defining the Custom ODE Model Component</span></a></li><li><a class="tocitem" href="#Fitting-the-Custom-Model-Component"><span>Fitting the Custom Model Component</span></a></li></ul></li></ul></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../../api/components/">Model Components</a></li><li><a class="tocitem" href="../../api/mixtures/">Mixture Models</a></li><li><a class="tocitem" href="../../api/fitting/">Fitting Models</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Implementing Custom Components</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Implementing Custom Components</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/Computational-Biology-TUe/TemporalMixtureModels.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/Computational-Biology-TUe/TemporalMixtureModels.jl/blob/main/docs/src/tutorials/custom.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Implementing-Custom-Components"><a class="docs-heading-anchor" href="#Implementing-Custom-Components">Implementing Custom Components</a><a id="Implementing-Custom-Components-1"></a><a class="docs-heading-anchor-permalink" href="#Implementing-Custom-Components" title="Permalink"></a></h1><p>This tutorial demonstrates how to create custom model components by subtyping the <code>AbstractMixtureModelComponent</code> and implementing the required methods. This allows for flexibility in defining new model types and behaviors tailored to specific use cases. In this example, we will create an ODE model component using the <code>OrdinaryDiffEq.jl</code> package and optimize its parameters using <code>Optim.jl</code>.</p><p>Load the necessary packages:</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, CairoMakie, TemporalMixtureModels, DataFrames, Optim, Random</code></pre><h2 id="Generating-some-synthetic-data"><a class="docs-heading-anchor" href="#Generating-some-synthetic-data">Generating some synthetic data</a><a id="Generating-some-synthetic-data-1"></a><a class="docs-heading-anchor-permalink" href="#Generating-some-synthetic-data" title="Permalink"></a></h2><p>In this tutorial, the ODE model that we will use is based on a simple decay process defined by the differential equation:</p><p class="math-container">\[\frac{\mathrm{d}u}{\mathrm{d}t} = -k u\]</p><p>where <span>$k$</span> is the decay constant, and we have an initial condition <span>$u(0) = u_0$</span>. While we can analytically solve this ODE, we will use a numerical solver to demonstrate how to integrate ODE solving into a custom model component.</p><p>We will generate synthetic data by simulating this decay process with added Gaussian noise. The input DataFrame should be a so-called &quot;long&quot; format, with columns for the individual ID, time points, and observed values. First, we define functions to simulate the decay process and generate synthetic data for multiple individuals.</p><pre><code class="language-julia hljs"># Set random seed for reproducibility
+Random.seed!(1234)
+
+function decay_ode!(du, u, p, t)
+    k = p[1]
+    du[1] = -k * u[1]
+end
+
+function simulate_decay(p, u0, t; noise_std=0.1)
+    prob = ODEProblem(decay_ode!, u0, (t[1], t[end]), p)
+    sol = solve(prob, Tsit5(), saveat=t)
+    noisy_data = sol .+ noise_std * randn(length(t))
+    return noisy_data
+end
+
+function simulate_group(p_mean, p_std, u0_mean, u0_std, t, n_individuals, id_start=1; noise_std=0.1)
+    p = p_mean .+ randn(n_individuals) .* p_std
+    u0 = u0_mean .+ randn(n_individuals) .* u0_std
+
+    values = Float64[]
+    time = Float64[]
+    ids = Int[]
+    for (i, id) in enumerate(id_start:(id_start + n_individuals - 1))
+        data = Array(simulate_decay([p[i]], [u0[i]], t; noise_std=noise_std))[1,:]
+        append!(values, data)
+        append!(time, t)
+        append!(ids, fill(id, length(t)))
+    end
+    return DataFrame(id=ids, time=time, value=values)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">simulate_group (generic function with 2 methods)</code></pre><p>We can now generate synthetic data for three groups of individuals, each with different decay constants and initial conditions.</p><pre><code class="language-julia hljs"># simulate three groups
+time_points = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+group1 = simulate_group(0.5, 0.05, 5.0, 0.5, time_points, 30)
+group2 = simulate_group(1.0, 0.1, 3.0, 0.3, time_points, 15, 31)
+group3 = simulate_group(1.5, 0.15, 1.0, 0.2, time_points, 45, 46)
+data = vcat(group1, group2, group3)
+first(data, 5)  # Display the first 5 rows of the DataFrame</code></pre><div><div style = "float: left;"><span>5×3 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">id</th><th style = "text-align: left;">time</th><th style = "text-align: left;">value</th></tr><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;"></th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th></tr></thead><tbody><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">1</td><td style = "text-align: right;">0.0</td><td style = "text-align: right;">5.06782</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">1</td><td style = "text-align: right;">0.5</td><td style = "text-align: right;">3.89732</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">1</td><td style = "text-align: right;">1.0</td><td style = "text-align: right;">3.00759</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">4</td><td style = "text-align: right;">1</td><td style = "text-align: right;">1.5</td><td style = "text-align: right;">2.33128</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">5</td><td style = "text-align: right;">1</td><td style = "text-align: right;">2.0</td><td style = "text-align: right;">1.81719</td></tr></tbody></table></div><p>Here you can see the first few rows of the generated DataFrame. Each row corresponds to a measurement for a specific individual at a specific time point.</p><h2 id="Defining-the-Custom-ODE-Model-Component"><a class="docs-heading-anchor" href="#Defining-the-Custom-ODE-Model-Component">Defining the Custom ODE Model Component</a><a id="Defining-the-Custom-ODE-Model-Component-1"></a><a class="docs-heading-anchor-permalink" href="#Defining-the-Custom-ODE-Model-Component" title="Permalink"></a></h2><p>We will now define a custom model component by subtyping the <code>AbstractMixtureModelComponent</code>.</p><pre><code class="language-julia hljs">mutable struct DecayODE{T&lt;:Real} &lt;: TemporalMixtureModels.AbstractMixtureModelComponent{T}
+    coefficients::Vector{T}  # [k, u0]
+    function DecayODE(p::T, u0::T) where T&lt;:Real
+        new{T}([p, u0])
+    end
+end
+
+function DecayODE()
+    DecayODE(1.0, 1.0)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.DecayODE</code></pre><p>The <code>DecayODE</code> struct holds the parameters of the ODE model, specifically the decay constant <span>$k$</span> and the initial condition <span>$u_0$</span>. The coefficients field is <em>mandatory</em> for all model components, as it is used in the fitting process.</p><p>Next, we need to implement four essential methods for our custom model component: <code>predict(::DecayODE, t)</code>, <code>randinit!(::DecayODE)</code>, <code>fit!(::DecayODE, t, y)</code>, and <code>fit!(::DecayODE, t, y, w)</code>.</p><pre><code class="language-julia hljs">function TemporalMixtureModels.predict(m::DecayODE, t)
+    p, u0 = m.coefficients
+    prob = ODEProblem(decay_ode!, [u0], (minimum(t), maximum(t)), [p])
+
+    # argsort t
+    sorted_indices = sortperm(t)
+
+    sol = Array(solve(prob, Tsit5(), saveat=t))[:]
+
+    # count the number of time points where t == minimum(t), and add those to the start of sol (n - 1) times
+    n = count(x -&gt; x == minimum(t), t)
+    if n &gt; 1
+        sol = vcat(fill(sol[1], n - 1), sol)
+    end
+
+    try
+        return sol[invperm(sorted_indices)]
+    catch
+        return sol
+    end
+end
+
+function TemporalMixtureModels.randinit!(m::DecayODE)
+    m.coefficients = [rand(0.1:0.1:2.0), rand(0.5:0.5:6.0)]
+end
+
+function TemporalMixtureModels.fit!(m::DecayODE, t, y)
+    function loss(p)
+        y_hat = TemporalMixtureModels.predict(DecayODE(p[1], p[2]), t)
+        if length(y_hat) != length(y)
+            return Inf
+        end
+        return sum(abs2, y_hat .- y)
+    end
+    result = Optim.minimizer(optimize(loss, [0.0, 0.0], [10.0,10.0], m.coefficients, Fminbox(BFGS()), autodiff=:forward))
+    m.coefficients = result
+end
+
+function TemporalMixtureModels.fit!(m::DecayODE, t, y, weights)
+    function loss(p)
+        y_hat = TemporalMixtureModels.predict(DecayODE(p[1], p[2]), t)
+        if length(y_hat) != length(y)
+            return Inf
+        end
+        return sum(weights .* (y_hat .- y).^2)
+    end
+    result = Optim.minimizer(optimize(loss, [0.0, 0.0], [10.0,10.0], m.coefficients, Fminbox(BFGS()), autodiff=:forward))
+    m.coefficients = result
+end</code></pre><p>The <code>predict</code> function uses the <code>OrdinaryDiffEq.jl</code> package to solve the ODE numerically for given time points. The <code>randinit!</code> function initializes the model parameters randomly within specified ranges. The <code>fit!</code> functions optimize the model parameters to minimize the squared error between the predicted and observed values, with and without weights.</p><h2 id="Fitting-the-Custom-Model-Component"><a class="docs-heading-anchor" href="#Fitting-the-Custom-Model-Component">Fitting the Custom Model Component</a><a id="Fitting-the-Custom-Model-Component-1"></a><a class="docs-heading-anchor-permalink" href="#Fitting-the-Custom-Model-Component" title="Permalink"></a></h2><p>After defining the custom model component, we can now fit a temporal mixture model using our <code>DecayODE</code> component.</p><pre><code class="language-julia hljs">mm = UnivariateMixtureModel(3, DecayODE())
+TemporalMixtureModels.fit!(mm, data)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">UnivariateMixtureModel{Float64}(TemporalMixtureModels.AbstractMixtureModelComponent{Float64}[Main.DecayODE{Float64}([0.49908746395781073, 4.992857092650121]), Main.DecayODE{Float64}([1.439895972310441, 0.9992240545341675]), Main.DecayODE{Float64}([0.9707692157323313, 3.035716737645983])], [0.3333333333333333, 0.5, 0.16666666666666666], [0.09097938198715373, 0.016945981882044044, 0.03197955192652382], 92.72137820218538, true, 6)</code></pre><p>Similarly, we can also use the bootstrap method to estimate confidence intervals for the model parameters.</p><pre><code class="language-julia hljs">n_bootstrap = 50  # Number of bootstrap samples
+confidence_intervals, _, _ = bootstrap_ci(mm, data; n_bootstrap=n_bootstrap)
+confidence_intervals</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Any}:
+ (lower = [0.4689917449811434, 4.826032213025666], upper = [0.5167814772699992, 5.1519546080997625])
+ (lower = [1.3528921124323356, 0.9509219661249272], upper = [1.5660893490362158, 1.0600671203465288])
+ (lower = [0.9052616272099933, 2.8800132577660995], upper = [1.0214913477661791, 3.1474984022240347])</code></pre><p>The output shows the confidence intervals for the parameters of each component model in the mixture. We can use these intervals and the fitted model to visualize the results.</p><pre><code class="language-julia hljs"># Create a range of time points for prediction
+t_pred = 0:0.1:3.0
+
+# Prepare a figure
+figure_mixture = let f = Figure()
+    ax = Axis(f[1, 1], xlabel=&quot;Time&quot;, ylabel=&quot;Value&quot;, title=&quot;Temporal Mixture Model Fit&quot;)
+
+    # Plot the original data points
+    scatter!(ax, data.time, data.value; color=:gray, markersize=4, label=&quot;Data&quot;)
+
+    # Plot the fitted component models
+    predictions = predict(mm, t_pred)
+
+    COMPONENT_COLORS = [colorant&quot;#c74300&quot;, colorant&quot;#008aa1&quot;, colorant&quot;#ffc300&quot;]
+
+    for k in axes(predictions, 2)
+        lines!(ax, t_pred, predictions[:, k];
+        label=&quot;Component $k&quot;, color=COMPONENT_COLORS[k], linewidth=2)
+
+        # get the confidence bounds. This is still a bit clunky because there is no API for this yet
+        lower_bound_parameters = confidence_intervals[k][:lower]
+        upper_bound_parameters = confidence_intervals[k][:upper]
+
+        # sample 5000 random parameter sets within the confidence bounds
+        random_parameters = [[rand() * (upper_bound_parameters[i] - lower_bound_parameters[i]) + lower_bound_parameters[i] for i in eachindex(lower_bound_parameters)] for _ in 1:5000]
+
+        models = [DecayODE(p[1], p[2]) for p in random_parameters]
+        predictions_ci = [predict(m, t_pred) for m in models]
+        y_lower = map(t -&gt; minimum([pred[t] for pred in predictions_ci]), 1:length(t_pred))
+        y_upper = map(t -&gt; maximum([pred[t] for pred in predictions_ci]), 1:length(t_pred))
+
+        # Plot the confidence intervals as shaded areas
+        band!(ax, t_pred, y_lower, y_upper;
+        color=(COMPONENT_COLORS[k], 0.2), label=&quot;Component $k&quot;)
+    end
+
+    axislegend(ax; merge=true)
+
+    f
+end</code></pre><img src="a64ca4ee.png" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../multivariate/">« Multivariate</a><a class="docs-footer-nextpage" href="../../api/components/">Model Components »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Tuesday 30 September 2025 12:44">Tuesday 30 September 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
