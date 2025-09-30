@@ -11,12 +11,12 @@ end
 function variance(model::AbstractMixtureModelComponent{T}, t::AbstractVector{T}, y::AbstractVector{T}) where T<:Real
     N = length(y)
     residuals = y .- predict(model, t)
-    return sum(abs2, residuals) ./ (N - model.degree - 1)
+    return sum(abs2, residuals) ./ (N - n_parameters(model))
 end
 
 function variance(model::AbstractMixtureModelComponent{T}, t::AbstractVector{T}, y::AbstractVector{T}, w::AbstractVector{T}) where T<:Real
     residuals = y .- predict(model, t)
-    return sum(w .* abs2.(residuals)) ./ (sum(w) - model.degree - 1)
+    return sum(w .* abs2.(residuals)) ./ (sum(w) - n_parameters(model))
 end
 
 function predict(model::AbstractRegressionModel, t::AbstractVector)
