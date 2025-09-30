@@ -33,8 +33,8 @@ function simulate_decay(p, u0, t; noise_std=0.1)
 end
 
 function simulate_group(p_mean, p_std, u0_mean, u0_std, n_individuals, t, id_start=1; noise_std=0.1)
-    p = p_mean .+ randn(n) .* p_std
-    u0 = u0_mean .+ randn(n) .* u0_std
+    p = p_mean .+ randn(n_individuals) .* p_std
+    u0 = u0_mean .+ randn(n_individuals) .* u0_std
 
     values = Float64[]
     time = Float64[]
