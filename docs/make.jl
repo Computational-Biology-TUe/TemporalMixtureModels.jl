@@ -10,6 +10,7 @@ makedocs(
         "Tutorials" => [
             "Univariate" => "tutorials/univariate.md",
             "Multivariate" => "tutorials/multivariate.md",
+            "Implementing Custom Components" => "tutorials/custom.md",
             ],
         "Manual" => [
             "Model Components" => "api/components.md",
