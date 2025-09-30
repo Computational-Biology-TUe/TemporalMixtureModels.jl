@@ -10,7 +10,7 @@ using OrdinaryDiffEq, CairoMakie, TemporalMixtureModels, DataFrames, Optim, Rand
 In this tutorial, the ODE model that we will use is based on a simple decay process defined by the differential equation:
 
 ```math
-\\frac{\\mathrm{d}u}{\\mathrm{d}t} = -k u
+\frac{\mathrm{d}u}{\mathrm{d}t} = -k u
 ```
 
 where ``k`` is the decay constant, and we have an initial condition ``u(0) = u_0``. While we can analytically solve this ODE, we will use a numerical solver to demonstrate how to integrate ODE solving into a custom model component.
@@ -40,7 +40,7 @@ function simulate_group(p_mean, p_std, u0_mean, u0_std, t, n_individuals, id_sta
     time = Float64[]
     ids = Int[]
     for (i, id) in enumerate(id_start:(id_start + n_individuals - 1))
-        data = Array(simulate_decay([p[i]], [u0[i]], t); noise_std=noise_std)[1,:]
+        data = Array(simulate_decay([p[i]], [u0[i]], t; noise_std=noise_std))[1,:]
         append!(values, data)
         append!(time, t)
         append!(ids, fill(id, length(t)))
@@ -84,7 +84,7 @@ Next, we need to implement four essential methods for our custom model component
 ```@example custom
 function TemporalMixtureModels.predict(m::DecayODE, t)
     p, u0 = m.coefficients
-    prob = ODEProblem(ode_decay!, [u0], (minimum(t), maximum(t)), [p])
+    prob = ODEProblem(decay_ode!, [u0], (minimum(t), maximum(t)), [p])
 
     # argsort t
     sorted_indices = sortperm(t)
