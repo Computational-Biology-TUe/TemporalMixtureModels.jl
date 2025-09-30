@@ -32,7 +32,7 @@ function simulate_decay(p, u0, t; noise_std=0.1)
     return noisy_data
 end
 
-function simulate_group(p_mean, p_std, u0_mean, u0_std, n_individuals, t, id_start=1; noise_std=0.1)
+function simulate_group(p_mean, p_std, u0_mean, u0_std, t, n_individuals, id_start=1; noise_std=0.1)
     p = p_mean .+ randn(n_individuals) .* p_std
     u0 = u0_mean .+ randn(n_individuals) .* u0_std
 
