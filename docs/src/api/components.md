@@ -19,3 +19,6 @@ The `Lasso` model fits a polynomial regression with L1 regularization (lasso reg
 ```@docs
 LassoPolynomialRegression(degree::Int, lambda)
 ```
+
+## Custom Models
+Custom model components can be implemented by subtyping the `AbstractMixtureModelComponent` and implementing the required methods. This allows for flexibility in defining new model types and behaviors tailored to specific use cases. See the tutorial on [Implementing Custom Components](@ref) for how to create your own model components.
