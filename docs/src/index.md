@@ -2,7 +2,7 @@
 TemporalMixtureModels.jl is a small Julia package for fitting temporal mixture models to cluster time series data. The package supports both univariate and independent multivariate time series data. The package provides a simple API for fitting models, making predictions, and estimating uncertainty using bootstrap methods. 
 
 ## Installation
-The package is currently not registered in the Julia package registry. While it is unregistered, you'll be able to install the package over SSH in the Julia Pkg REPL:
+Installation is straightforward in Julia:
 
 ```julia
 pkg> add TemporalMixtureModels
