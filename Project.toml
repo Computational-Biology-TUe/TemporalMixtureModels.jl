@@ -1,7 +1,7 @@
 name = "TemporalMixtureModels"
 uuid = "04cebb6a-72a2-4d9b-bd91-f7dfea97eb3c"
 authors = ["max-de-rooij <54850292+max-de-rooij@users.noreply.github.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
