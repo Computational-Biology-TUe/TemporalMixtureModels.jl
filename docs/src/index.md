@@ -5,7 +5,7 @@ TemporalMixtureModels.jl is a small Julia package for fitting temporal mixture m
 The package is currently not registered in the Julia package registry. While it is unregistered, you'll be able to install the package over SSH in the Julia Pkg REPL:
 
 ```julia
-pkg> add "git@github.com:Computational-Biology-TUe/TemporalMixtureModels.jl.git"
+pkg> add TemporalMixtureModels
 ```
 
 ## Temporal Mixture Models
