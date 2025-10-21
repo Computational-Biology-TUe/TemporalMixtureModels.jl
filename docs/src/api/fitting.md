@@ -17,11 +17,11 @@ fit!
 To evaluate the fit of a temporal mixture model, the package provides functions to compute the log-likelihoods and posterior responsibilities.
 
 ```@docs
-log_likelihood(::AbstractMixtureModel, ::DataFrame)
+log_likelihood
 ```
     
 ```@docs
-posterior_responsibilities(::AbstractMixtureModel, ::DataFrame)
+posterior_responsibilities
 ```
 
 ## Bootstrap Confidence Intervals
