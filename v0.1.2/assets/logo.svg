@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_3" data-name="Layer 3" xmlns="http://www.w3.org/2000/svg" width="656.9" height="527.49" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 656.9 527.49">
+  <defs>
+    <symbol id="Blue_dot" data-name="Blue dot" viewBox="0 0 16.55 16.55">
+      <circle cx="8.27" cy="8.27" r="7.27" style="fill: #1f83ff; stroke: #4d4d4d; stroke-miterlimit: 10; stroke-width: 2px;"/>
+    </symbol>
+    <clipPath id="clippath">
+      <rect x="109.49" width="500" height="500" style="fill: none;"/>
+    </clipPath>
+  </defs>
+  <g style="clip-path: url(#clippath);">
+    <g>
+      <path d="M2.58,461.36c68.9-7.16,154.82-28.79,216.67-94.32,69.09-73.21,65.45-156,120.29-166.77,45.68-8.97,70.38,44.11,176.34,91.59,50.21,22.5,94.63,32.97,123.71,38.28" style="fill: none; opacity: .3; stroke: #9259a3; stroke-miterlimit: 10; stroke-width: 50px;"/>
+      <path d="M2.58,461.36c68.9-7.16,154.82-28.79,216.67-94.32,69.09-73.21,65.45-156,120.29-166.77,45.68-8.97,70.38,44.11,176.34,91.59,50.21,22.5,94.63,32.97,123.71,38.28" style="fill: none; stroke: #9259a3; stroke-miterlimit: 10; stroke-width: 12px;"/>
+      <use width="16.55" height="16.55" transform="translate(139.29 450.32)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(149.72 424.74)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(329.9 188.01)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(211.78 360.77)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(192.37 333.05)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(248.25 364.36)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(181.93 429.45)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(211.78 392.75)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(165.94 382.32)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(258.69 307.69)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(258.69 231.21)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(293.03 255.33)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(232.66 333.05)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(222.22 301.74)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(258.69 269.09)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(232.66 255.33)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(303.47 222.62)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(279.57 197.78)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(364.82 208.22)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(334.14 220.78)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(375.26 177.58)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(431.98 222.62)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(398.4 212.18)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(485.77 269.09)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(454.46 279.52)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(464.9 244.89)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(431.98 255.33)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(520.95 318.13)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(541.83 301.74)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(500.08 297.25)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(520.95 265.77)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(584.7 333.05)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(574.26 301.74)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(557.65 322.61)" xlink:href="#Blue_dot"/>
+      <path d="M77.77,520.82c37.06-134.01,81.09-239.38,116.88-314.35,40.97-85.83,68.38-126.06,111.41-136.01,46.33-10.72,76.78,21.52,151.74,46.48,73.7,24.54,142.61,26.13,196.85,21.19" style="fill: none; opacity: .3; stroke: #399746; stroke-miterlimit: 10; stroke-width: 50px;"/>
+      <path d="M89.39,484.6c32.5-118.95,72.6-212.22,105.26-278.18,49.44-99.84,77.24-127.84,111.41-136.01,46.46-11.11,76.05,21.28,151.74,46.48,73.7,24.54,142.61,26.13,196.85,21.19" style="fill: none; stroke: #399746; stroke-miterlimit: 10; stroke-width: 12px;"/>
+      <use width="16.55" height="16.55" transform="translate(147.11 364.36)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(128.85 387.74)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(192.37 138.26)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(157.55 301.74)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(139.29 330.7)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(454.46 126.48)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(122.98 352.47)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(133.42 278.4)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(167.98 342.03)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(496.21 102.02)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(176.38 186.68)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(207.93 181.35)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(147.11 252.09)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(165.94 270.24)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(155.5 208.22)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(176.38 229.76)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(531.39 156.7)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(222.22 148.7)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(552.27 116.04)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(258.69 95.72)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(227.38 106.7)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(290 85.83)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(290 54.52)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(125.91 419.01)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(568.09 138.26)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(414.86 102.02)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(253.22 64.96)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(344.58 54.52)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(371.45 75.39)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(510.52 126.48)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(349.12 96.27)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(416.11 75.39)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(479.21 143.77)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(444.02 96.27)" xlink:href="#Blue_dot"/>
+      <path d="M64.78,71.77c81.59,77.59,130.12,151.17,159.94,206.41,35.73,66.2,51.44,118.8,103.21,137.38,41.58,14.92,67.85-5.94,134.65-8.89,69.71-3.07,126.72,15.89,162.67,31.44" style="fill: none; opacity: .3; stroke: #ca3c32; stroke-miterlimit: 10; stroke-width: 50px;"/>
+      <path d="M95.54,100.48c62.99,70.26,103.68,133.24,129.18,177.71,42.7,74.46,55.74,119.6,103.21,137.38,41.59,15.58,66.74-5.9,134.65-8.89,69.71-3.07,126.72,15.89,162.67,31.44" style="fill: none; stroke: #ca3c32; stroke-miterlimit: 10; stroke-width: 12px;"/>
+      <use width="16.55" height="16.55" transform="translate(127.39 167.44) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(137.82 193.02) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(317.99 429.75) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(199.88 256.99) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(199.88 225.01) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(246.79 386.55) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(281.13 362.43) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(220.76 284.71) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(246.79 348.68) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(291.57 395.14) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(122.98 126.26) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(267.66 419.98) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(352.92 409.54) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(322.24 396.98) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(363.35 440.18) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(453 419.31) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(386.5 405.58) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(463.43 388.67) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(143.86 147.14) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(519.49 408.87) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(425.66 399.1) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(556.18 443.83) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(582.5 433.4) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(484.31 409.54) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(509.05 430.41) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(408.72 430.41) scale(1 -1)" xlink:href="#Blue_dot"/>
+      <use width="16.55" height="16.55" transform="translate(549.85 409.54) scale(1 -1)" xlink:href="#Blue_dot"/>
+    </g>
+  </g>
+</svg>
