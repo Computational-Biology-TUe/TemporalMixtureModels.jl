@@ -17,6 +17,17 @@ fit!
 - `tol`: The tolerance for convergence. The fitting process stops when the change in log-likelihood is less than this value. Default is `1e-6`.
 - `hard_assignment`: A boolean flag indicating whether to use hard assignments (True) or soft assignments (False) during the E-step of the EM algorithm. Default is `false`.
 
+## Evaluating Model Fit
+To evaluate the fit of a temporal mixture model, the package provides functions to compute the log-likelihoods and posterior responsibilities.
+
+```@docs
+log_likelihood(model::AbstractMixtureModel, df::DataFrame)
+```
+    
+```@docs
+posterior_responsibilities(model::AbstractMixtureModel, df::DataFrame)
+```
+
 ## Bootstrap Confidence Intervals
 To estimate the uncertainty of the fitted model parameters, the package provides a `bootstrap_ci` function. This function performs bootstrap resampling to compute confidence intervals for the model parameters.
 
