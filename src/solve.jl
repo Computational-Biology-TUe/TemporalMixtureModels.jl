@@ -69,9 +69,21 @@ function posterior_responsibilities(model::AbstractMixtureModel, X::MixtureData)
     return responsibilities(likelihoods)
 end
 
+"""
+Compute posterior responsibilities for the given DataFrame.
+"""
 function posterior_responsibilities(model::AbstractMixtureModel, df::DataFrame)
     X = _prepare_data(df)
     posterior_responsibilities(model, X)
+end
+
+"""
+Compute the total log-likelihood of the mixture model for the given DataFrame.
+"""
+function log_likelihood(model::AbstractMixtureModel, df::DataFrame)
+    X = _prepare_data(df)
+    LLs = log_likelihoods(model, X)
+    return total_loglikelihood(LLs)
 end
 
 # ============================================================

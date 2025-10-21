@@ -12,8 +12,10 @@ module TemporalMixtureModels
     include("solve.jl")
     include("uncertainty.jl")
 
+    export AbstractMixtureModel, AbstractMixtureModelComponent
     export UnivariateMixtureModel, MultivariateMixtureModel
     export PolynomialRegression, RidgePolynomialRegression, LassoPolynomialRegression
     export fit!, predict, bootstrap_ci
+    export log_likelihood, posterior_responsibilities
 
 end
