@@ -1,7 +1,3 @@
-```@setup
-using DataFrames: DataFrame
-```
-
 # Fitting Models and Estimating Uncertainty
 The primary function for fitting temporal mixture models is `fit!`. This function takes a mixture model and a dataset as input and performs the fitting process using the Expectation-Maximization (EM) algorithm. The function modifies the input model in place, updating its parameters to best fit the data.
 
@@ -21,11 +17,11 @@ fit!
 To evaluate the fit of a temporal mixture model, the package provides functions to compute the log-likelihoods and posterior responsibilities.
 
 ```@docs
-log_likelihood(model::AbstractMixtureModel, df::DataFrame)
+log_likelihood(::AbstractMixtureModel, ::DataFrame)
 ```
     
 ```@docs
-posterior_responsibilities(model::AbstractMixtureModel, df::DataFrame)
+posterior_responsibilities(::AbstractMixtureModel, ::DataFrame)
 ```
 
 ## Bootstrap Confidence Intervals
