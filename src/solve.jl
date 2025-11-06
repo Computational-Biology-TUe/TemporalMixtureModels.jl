@@ -1,262 +1,435 @@
-# EM logic for solving the mixture models
+# ============================================================================
+# Mixture Model Result
+# ============================================================================
 
-# ============================================================
-# General utility functions
-# ============================================================
+"""
+    MixtureResult
 
-function total_loglikelihood(log_num::AbstractMatrix{T}) where T<:Real
-    J = size(log_num, 1)
-    ll = zero(T)
-    @inbounds for j in 1:J
-        row = view(log_num, j, :)
-        ll += log(sum(exp, row .- maximum(row))) + maximum(row)
+Results from fitting a mixture model.
+"""
+struct MixtureResult
+    component::Component
+    n_clusters::Int
+    parameters::Vector{Vector{Float64}}
+    cluster_probs::Vector{Float64}
+    responsibilities::Matrix{Float64}
+    loglikelihood::Float64
+    converged::Bool
+    n_iterations::Int
+    error_model::ErrorModel
+end
+
+# ============================================================================
+# E-Step: Compute Responsibilities
+# ============================================================================
+
+function component_loglikelihood(component::Component,
+                                 params::AbstractVector{Float64},
+                                 t::AbstractVector{Float64},
+                                 y::AbstractMatrix{Float64},
+                                 error_model::ErrorModel,
+                                 component_variances::Vector{Float64},
+                                 inputs)
+    y_pred = predict(component, params, t, inputs)
+    ll = 0.0
+
+    for j in axes(y, 2)
+        residuals = y[:, j] - y_pred[:, j]
+        ll += loglikelihood(error_model, residuals, component_variances[j])
     end
+
     return ll
 end
 
-function responsibilities!(output::Matrix{T}, log_probs::Matrix{T}) where T
-    @inbounds for i in 1:size(log_probs, 1)
-        row = view(log_probs, i, :)
-        m = maximum(row)
-        denom = zero(T)
-        @simd for j in 1:size(log_probs, 2)
-            output[i, j] = exp(log_probs[i, j] - m)
-            denom += output[i, j]
-        end
-        @simd for j in 1:size(log_probs, 2)
-            output[i, j] /= denom
-        end
-    end
-    return output
-end
-
-function responsibilities(log_probs::Matrix{T}) where T
-    output = zeros(T, size(log_probs))
-    @inbounds for i in 1:size(log_probs, 1)
-        row = view(log_probs, i, :)
-        m = maximum(row)
-        denom = zero(T)
-        @simd for j in 1:size(log_probs, 2)
-            output[i, j] = exp(log_probs[i, j] - m)
-            denom += output[i, j]
-        end
-        @simd for j in 1:size(log_probs, 2)
-            output[i, j] /= denom
-        end
-    end
-    return output
-end
-
-function get_id_idx(X::UnivariateMixtureData)
-    id_to_index = Dict(id => idx for (idx, id) in enumerate(X.ids))
-    return [id_to_index[x.id] for x in X.data]
-end
-
-function get_id_idx(X::MultivariateMixtureData)
-    id_to_index = Dict(id => idx for (idx, id) in enumerate(X.ids))
-    return Dict(
-        var => [id_to_index[x.id] for x in X.data[var]]
-    for var in X.variables)
-end
-
-function e_step!(Γ, model::AbstractMixtureModel, X::MixtureData)
-    likelihoods = log_likelihoods(model, X)
-    return total_loglikelihood(likelihoods), responsibilities!(Γ, likelihoods)
-end
-
-function posterior_responsibilities(model::AbstractMixtureModel, X::MixtureData)
-    likelihoods = log_likelihoods(model, X)
-    return responsibilities(likelihoods)
-end
-
 """
-Compute posterior responsibilities for the given DataFrame.
-"""
-function posterior_responsibilities(model::AbstractMixtureModel, df::DataFrame)
-    X = _prepare_data(df)
-    posterior_responsibilities(model, X)
-end
+    e_step!(responsibilities, data, component, parameters, probs, error_model, inputs)
 
+E-step: Compute responsibilities for all subjects and clusters.
+Updates responsibilities matrix in-place.
 """
-Compute the total log-likelihood of the mixture model for the given DataFrame.
-"""
-function log_likelihood(model::AbstractMixtureModel, df::DataFrame)
-    X = _prepare_data(df)
-    LLs = log_likelihoods(model, X)
-    return total_loglikelihood(LLs)
-end
-
-# ============================================================
-# Univariate Mixture Models
-# ============================================================
-function init_em!(model::UnivariateMixtureModel, X::UnivariateMixtureData; rng::AbstractRNG=Random.default_rng())
-
-    # randomly assign individuals to components
-    assignments = rand(rng, 1:n_components(model), length(X.ids))
-    model.weights .= 1.0 / n_components(model)
+function e_step!(responsibilities::Matrix{Float64},
+                data::MixtureData,
+                component::Component,
+                parameters::Vector{Vector{Float64}},
+                mixture_weights::Vector{Float64},
+                error_model::ErrorModel,
+                variances::Matrix{Float64},
+                inputs)
     
-    # initialize coefficients for each component
-    for k in 1:n_components(model)
-        ids_in_component = X.ids[assignments .== k]
-        
-        ids_set = Set(ids_in_component)
-        samples = filter(x -> x.id in ids_set, X.data)
+    n_clusters = length(parameters)
+    log_probs = zeros(n_clusters)
+    
+    for subject in unique(data.ids)
 
-        if length(samples) > n_parameters(model.components[k])
-            fit!(model.components[k], samples.t, samples.y)
-        else
-            randinit!(model.components[k], rng)  # Random initialization if not enough samples
+        tv, yv = subset_view(data, subject)
+
+        # find missing observations
+        missing_mask = map(i -> any(ismissing, yv[i, :]), axes(yv, 1))
+        tv = tv[.!missing_mask]
+        yv = Float64.(yv[.!missing_mask, :])
+               
+        # Compute log probabilities for each cluster
+        for k in 1:n_clusters
+            log_probs[k] = log(mixture_weights[k]) + component_loglikelihood(
+                component, parameters[k], tv, yv, error_model, variances[k, :], inputs
+            )
         end
-        # initialize variances
-        model.variances[k] = variance(model.components[k], samples.t, samples.y)
+        
+        # Normalize using log-sum-exp trick
+        max_log_prob = maximum(log_probs)
+        for k in 1:n_clusters
+            responsibilities[subject, k] = exp(log_probs[k] - max_log_prob)
+        end
+        
+        # Normalize to sum to 1
+        row_sum = sum(view(responsibilities, subject, :))
+        for k in 1:n_clusters
+            responsibilities[subject, k] /= row_sum
+        end
     end
-
+    
+    return nothing
 end
 
-function m_step!(model::UnivariateMixtureModel, X::UnivariateMixtureData, Γ, id_idx, n_k; rng=Random.default_rng())
-    # update coefficients and variances
-    for k in 1:n_components(model)
-        Wv = [Γ[id_idx[i], k] for i in 1:length(X.data)]
-        if n_k[k] > n_parameters(model.components[k])
-            # Fit polynomial with weights
-            fit!(model.components[k], X.data.t, X.data.y, Wv)
-            model.variances[k] = variance(model.components[k], X.data.t, X.data.y, Wv)
+# ============================================================================
+# M-Step: Update Parameters
+# ============================================================================
+
+"""
+    fit_weighted_optimized(component, data, responsibilities, cluster, error_model, 
+                          weighted_data, inputs)
+
+Fit weighted regression for a single cluster using pre-allocated buffers.
+"""
+function fit_weighted!(parameters, component::Component,
+                    data::MixtureData,
+                    responsibilities::Matrix{Float64},
+                    k::Int,
+                    inputs)
+
+    Wv = [responsibilities[id, k] for id in data.ids]
+
+    missing_mask = map(i -> any(ismissing, data.y[i, :]), axes(data.y, 1))
+    tv = data.t[.!missing_mask]
+    yv = Float64.(data.y[.!missing_mask, :])
+    Wv = Wv[.!missing_mask]
+
+    if sum(Wv) > n_parameters(component)
+        # Fit polynomial with weights
+        fit!(parameters, component, tv, yv[:, 1], Wv, inputs)
+    else
+        # If no samples assigned to this component, reinitialize by fitting to all data
+        fit!(parameters, component, tv, yv[:, 1], inputs)
+        
+    end
+end
+
+function fit_weighted!(parameters, component::CompositeComponent,
+                               data::MixtureData,
+                               responsibilities::Matrix{Float64},
+                               k::Int,
+                               inputs)
+
+    Wv = [responsibilities[id, k] for id in data.ids]
+    # fit each sub-component separately
+
+    for (comp, y_range, param_range) in zip(component.components, component.y_ranges, component.param_ranges)
+
+        missing_mask = map(i -> any(ismissing.(data.y[i, y_range])), axes(data.y, 1))
+        tv = data.t[.!missing_mask]
+        yv = Float64.(data.y[.!missing_mask, y_range])
+        Wv_c = Wv[.!missing_mask]
+
+        println(sum(Wv_c))
+        if sum(Wv_c) > n_parameters(component)
+            # Fit component with weights
+            fit!(parameters[param_range], comp, tv, yv, Wv_c, inputs)
         else
             # If no samples assigned to this component, reinitialize by fitting to all data
-            fit!(model.components[k], X.data.t, X.data.y)
-            model.variances[k] = variance(model.components[k], X.data.t, X.data.y)
+            fit!(parameters[param_range], comp, tv, yv, inputs)
+        end
+    end
+
+end
+
+"""
+    m_step!(parameters, probs, data, component, responsibilities, error_model, 
+            weighted_data_buffers, inputs)
+
+M-step: Update parameters and mixing proportions.
+Updates parameters and probs in-place.
+"""
+function m_step!(parameters::Vector{Vector{Float64}},
+                probs::AbstractVector{Float64},
+                data::MixtureData,
+                component::Component,
+                responsibilities::Matrix{Float64},
+                inputs)
+    
+    n_clusters = length(parameters)
+    
+    # Update mixing proportions
+    @inbounds for k in 1:n_clusters
+        probs[k] = mean(view(responsibilities, :, k))
+    end
+    
+    # Update component parameters for each cluster
+    @inbounds for k in 1:n_clusters
+        fit_weighted!(
+            parameters[k], component, data, responsibilities, k, inputs
+        )
+    end
+    
+    return nothing
+end
+
+# ============================================================================
+# Compute Log-Likelihood
+# ============================================================================
+
+"""
+    compute_total_loglikelihood(data, component, parameters, probs, error_model, inputs)
+
+Compute total log-likelihood of the mixture model.
+"""
+function compute_total_loglikelihood(data::MixtureData,
+                                    component::Component,
+                                    parameters::Vector{Vector{Float64}},
+                                    variances::Matrix{Float64},
+                                    probs::Vector{Float64},
+                                    error_model::ErrorModel,
+                                    inputs)
+    loglik = 0.0
+    n_clusters = length(parameters)
+    
+    for subject in unique(data.ids)
+
+        # get subject data
+        tv, yv = subset_view(data, subject)
+
+        # find missing observations
+        missing_mask = map(i -> any(ismissing, yv[i, :]), axes(yv, 1))
+        tv = tv[.!missing_mask]
+        yv = Float64.(yv[.!missing_mask, :])
+        
+        # Compute weighted sum over clusters
+        prob_sum = 0.0
+        for k in 1:n_clusters
+            log_prob = log(probs[k])
+            
+            # Sum over measurements
+            log_prob += component_loglikelihood(
+                component, parameters[k], tv, yv, error_model, variances[k, :], inputs
+            )
+
+            
+            prob_sum += exp(log_prob)
         end
         
+        loglik += log(prob_sum)
     end
-end
-
-# ============================================================
-# Multivariate Mixture Models
-# ============================================================
-
-function init_em!(model::MultivariateMixtureModel, X::MultivariateMixtureData; rng=Random.default_rng())
-
-    # randomly assign individuals to components
-    assignments = rand(rng, 1:n_components(model), length(X.ids))
-    model.weights .= 1.0 / n_components(model)
     
-     # initialize coefficients and variances
-    for (i, var) in enumerate(X.variables)
-        # initialize coefficients for each component
-        for k in 1:n_components(model)
-            ids_in_component = X.ids[assignments .== k]
-            ids_set = Set(ids_in_component)
-            samples = filter(x -> x.id in ids_set, X.data[var])
-
-            if length(samples) > model.components[k][var].degree + 1
-                fit!(model.components[k][var], samples.t, samples.y)
-            else
-                randinit!(model.components[k][var], rng)  # Random initialization if not enough samples
-            end
-            # initialize variances
-            model.variances[i,k] = variance(model.components[k][var], samples.t, samples.y)
-        end
-    end
+    return loglik
 end
 
-function m_step!(model::MultivariateMixtureModel, X::MultivariateMixtureData, Γ, id_idx, n_k; rng=Random.default_rng())
-    # update coefficients and variances
-    for (i, var) in enumerate(X.variables)
-        # initialize coefficients for each component
-        for k in 1:n_components(model)
-            samples = X.data[var]
-            Wv = [Γ[id_idx[var][i], k] for i in 1:length(samples)]
-            if n_k[k] > model.components[k][var].degree + 1
-                # Fit polynomial with weights
-                fit!(model.components[k][var], samples.t, samples.y, Wv)
-                model.variances[i, k] = variance(model.components[k][var], samples.t, samples.y, Wv)
-            else
-                # If no samples assigned to this component, reinitialize by fitting to all data
-                fit!(model.components[k][var], samples.t, samples.y)
-                model.variances[i, k] = variance(model.components[k][var], samples.t, samples.y)
-            end
-            
+"""
+    row_normalize!(mat)
+
+    Normalize each row of matrix `mat` in-place to sum to 1.
+"""
+function row_normalize!(mat::Matrix{Float64})
+    @inbounds for i in axes(mat, 1)
+        row_sum = sum(view(mat, i, :))
+        for j in axes(mat, 2)
+            mat[i, j] /= row_sum
         end
     end
+    return nothing
 end
 
-# ============================================================
-# Main fit function
-# ============================================================
+# ============================================================================
+# Main Fitting Function
+# ============================================================================
 
-function fit!(model::AbstractMixtureModel, X::MixtureData; rng::AbstractRNG=Random.default_rng(), verbose::Bool=true, max_iter::Int=100, tol::Real=1e-6, hard_assignment::Bool=false)
+function mixture_variance(component::Component, error_model::ErrorModel, data::MixtureData, 
+                          parameters::Vector{Vector{Float64}},
+                          responsibilities::Matrix{Float64},
+                          inputs)
 
-    init_em!(model, X; rng=rng)
-    id_idx = get_id_idx(X)
-    Γ = zeros(length(X.ids), n_components(model))
-    model.converged = false
+    n_obs = size(data.y, 1)
+    n_variables = size(data.y, 2)
+    n_components = length(parameters)
 
-    for it in 1:max_iter
+    # get responsibilities per data point
+    responsibilities_per_point = zeros(n_obs, n_components)
+    for (id_idx, id) in enumerate(data.ids)
+        for k in 1:n_components
+            responsibilities_per_point[id_idx, k] = responsibilities[id, k]
+        end
+    end
+
+    # Compute variance
+    y_pred = [predict(component, p, data.t, inputs) for p in parameters]
+    variances = zeros(n_components, n_variables)
+    for k in 1:n_components
+        predictions = y_pred[k]
+        for j in 1:n_variables
+            missing_mask = .!ismissing.(data.y[:, j])
+
+            residuals = data.y[missing_mask, j] - predictions[missing_mask, j]
+            variances[k, j] = variance(error_model, residuals, view(responsibilities_per_point, missing_mask, k))
+        end
+    end
+
+    return variances
+end
+
+
+"""
+    fit_mixture(component, n_clusters, t, y, ids; 
+                error_model=NormalError(), inputs=nothing, 
+                max_iter=100, tol=1e-6, verbose=true)
+
+Fit a mixture model using optimized EM algorithm.
+
+# Arguments
+- `component`: A Component model (e.g., PolynomialRegression(2))
+- `n_clusters`: Number of mixture components/clusters
+- `t`: Time points (vector)
+- `y`: Measurements (vector for single measurement, matrix for multiple)
+- `ids`: Subject identifiers (vector)
+
+# Keyword Arguments
+- `error_model`: Error distribution (NormalError(), PoissonError(), or LogNormalError())
+- `inputs`: Additional input variables (e.g., [body_mass])
+- `max_iter`: Maximum EM iterations (default: 100)
+- `tol`: Convergence tolerance (default: 1e-6)
+- `verbose`: Print progress (default: true)
+
+# Returns
+- `MixtureResult` containing fitted parameters and cluster assignments
+
+# Examples
+```julia
+# Single measurement with normal errors
+result = fit_mixture(PolynomialRegression(2), 3, t, y, ids)
+
+# Multiple measurements with Poisson errors
+y_multi = hcat(glucose, insulin)
+model = @component begin
+    y[1] ~ PolynomialRegression(2)
+    y[2] ~ PolynomialRegression(3)
+end
+result = fit_mixture(model, 3, t, y_multi, ids; error_model=PoissonError())
+```
+"""
+function fit_mixture(component::Component, n_components::Int, 
+                     t::AbstractVector, y::AbstractMatrix, 
+                     ids::AbstractVector;
+                     error_model::ErrorModel=NormalError(),
+                     inputs=nothing,
+                     max_iter::Int=100,
+                     tol::Float64=1e-6,
+                     verbose::Bool=true)
+    
+    # Validate inputs
+    n_obs, n_variables = size(y)
+    @assert length(t) == n_obs "Length of t must match number of observations"
+    @assert length(ids) == n_obs "Length of ids must match number of observations"
+    
+    data = MixtureData(t, y, ids)
+    
+    # Initialize parameters
+    parameters = [initialize_parameters(component) for _ in 1:n_components]
+    mixture_weights = ones(n_components) ./ n_components
+    
+    # Initialize responsibilities randomly
+    responsibilities = zeros(length(unique(data.ids)), n_components)
+    resps = rand(length(unique(data.ids)), n_components)
+    responsibilities[argmax(resps, dims=2)] .= 1.0
+
+    variances = mixture_variance(component, error_model, data, parameters, responsibilities, inputs)
+    
+    # EM iterations
+    prev_loglik = -Inf
+    converged = false
+    iter = 0
+    
+    for iter in 1:max_iter
         # E-step
-        LL, Γ = e_step!(Γ, model, X)
-
-        if hard_assignment
-            assignments = argmax(Γ, dims=2)
-            Γ .= 0.0
-            Γ[assignments] .= 1.0
-        end
-
-        # Check convergence
-        if abs(LL - model.log_likelihood) < tol
-            model.log_likelihood = LL
-            model.converged = true
-            model.iterations = it
-            if verbose
-                println("Converged after $it iterations with log-likelihood: $LL")
-            end
-
-            return model
-        end
-        model.log_likelihood = LL
-
-        # update mixing weights
-        n_k = sum(Γ, dims=1)[:]
-        model.weights = n_k ./ sum(n_k)
-
+        e_step!(responsibilities, data, component, parameters, 
+                mixture_weights, error_model, variances, inputs)
+        
         # M-step
-        m_step!(model, X, Γ, id_idx, n_k; rng=rng)
-    end
-    model.iterations = max_iter
-    if verbose
-        println("Reached maximum iterations ($max_iter) without convergence. Final log-likelihood: $model.log_likelihood")
-    end
+        m_step!(parameters, mixture_weights, data, component, responsibilities, inputs)
 
-    return model
+        # Update variances
+        variances = mixture_variance(component, error_model, data, parameters, responsibilities, inputs)
 
+        # Compute log-likelihood
+        loglik = compute_total_loglikelihood(data, component, parameters, variances,
+                                            mixture_weights, error_model, inputs)
+        
+        # Check convergence
+        if abs(loglik - prev_loglik) < tol
+            converged = true
+            verbose && println("Converged at iteration $iter")
+            verbose && println("Final log-likelihood: $(round(loglik, digits=4))")
+            break
+        end
+        
+        prev_loglik = loglik
+        
+        if verbose && (iter % 10 == 0 || iter == 1)
+            println("Iteration $iter: log-likelihood = $(round(loglik, digits=4))")
+        end
+    end
+    
+    if !converged && verbose
+        println("Did not converge after $max_iter iterations")
+        println("Final log-likelihood: $(round(prev_loglik, digits=4))")
+    end
+    
+    # Assign subjects to most likely cluster
+    # assignments = Dict{Any, Int}()
+    # @inbounds for (subj_idx, subject) in enumerate(data.subjects)
+    #     assignments[subject.id] = argmax(view(responsibilities, subj_idx, :))
+    # end
+    
+    return MixtureResult(
+        component,
+        n_components,
+        parameters,
+        mixture_weights,
+        responsibilities,
+        prev_loglik,
+        converged,
+        iter,
+        error_model
+    )
 end
 
-"""
-Fit a mixture model to the given DataFrame.
-
-## Usage
-```julia
-fit!(model, df, [id_col], [time_col], [value_col], [var_name_col]; kwargs...)
-```
-
-## Arguments
-- `model::AbstractMixtureModel`: The mixture model to fit.
-- `df::DataFrame`: The input data.
-
-### Optional Keyword Arguments
-- `id_col::String="id"`: The name of the column containing individual IDs.
-- `time_col::String="time"`: The name of the column containing time points.
-- `value_col::String="value"`: The name of the column containing observed values.
-- `var_name_col::String="var_name"`: The name of the column containing variable, can be ignored for univariate data.
-- `kwargs...`: Additional keyword arguments passed to the internal `fit!` function.
-
-## Example
-```julia
-model = UnivariateMixtureModel(2, PolynomialRegression(2))
-fit!(model, df)
-```
-"""
-function fit!(model::AbstractMixtureModel, df::DataFrame;
-    id_col = "id", time_col = "time", value_col = "value", var_name_col = "var_name", kwargs...)
-    X = _prepare_data(df, id_col=id_col, time_col=time_col, value_col=value_col, var_name_col=var_name_col)
-    return fit!(model, X; kwargs...)
+function fit_mixture(component::Component, n_components::Int, 
+                     t::AbstractVector, y::AbstractVector, 
+                     ids::AbstractVector;
+                     error_model::ErrorModel=NormalError(),
+                     inputs=nothing,
+                     max_iter::Int=100,
+                     tol::Float64=1e-6,
+                     verbose::Bool=true)
+    # Convert y to matrix
+    y_matrix = reshape(y, length(y), 1)
+    return fit_mixture(component, n_components, t, y_matrix, ids;
+                       error_model=error_model,
+                       inputs=inputs,
+                       max_iter=max_iter,
+                       tol=tol,
+                       verbose=verbose)
 end
+
+    # # Convert y to matrix if it's a vector
+    # if y isa AbstractVector
+    #     y = reshape(y, length(y), 1)
+    # end
+
+# TODO: Dispatch on initial subject assignment
