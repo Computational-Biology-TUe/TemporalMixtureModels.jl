@@ -73,24 +73,3 @@ function fit!(parameters, model::PolynomialRegression, t::AbstractVector, y::Abs
     XTW = transpose(Ξ) .* Wv'
     parameters .= LS.solve(LS.LinearProblem(XTW * Ξ, XTW * y[:])).u
 end
-
-"""
-Build design matrix for polynomial regression (pre-allocated version)
-"""
-function design_matrix!(X::Matrix{Float64}, m::PolynomialRegression, t::AbstractVector)
-    n = length(t)
-    @inbounds for i in 1:n
-        ti = t[i]
-        X[i, 1] = 1.0
-        for j in 2:(m.degree + 1)
-            X[i, j] = X[i, j-1] * ti
-        end
-    end
-    return X
-end
-
-function design_matrix(m::PolynomialRegression, t::AbstractVector)
-    X = zeros(length(t), m.degree + 1)
-    design_matrix!(X, m, t)
-    return X
-end

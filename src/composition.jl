@@ -47,7 +47,7 @@ function predict(m::CompositeComponent, params::AbstractVector,
     n_measurements = length(m.components)
     y_pred = zeros(n_obs, n_measurements)
     
-    @inbounds for (y_range, param_range, comp) in zip(m.y_ranges, m.param_ranges, m.components)
+    for (y_range, param_range, comp) in zip(m.y_ranges, m.param_ranges, m.components)
         comp_params = view(params, param_range)
         y_pred[:, y_range] = predict(comp, comp_params, t, inputs)
     end

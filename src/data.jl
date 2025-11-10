@@ -15,7 +15,22 @@ struct MixtureData{T<:Union{Real, Missing}, Y<:Union{Real, Missing}}
     t::Vector{T}
     y::Matrix{Y}
     ids::Vector{Int}
+
+    function MixtureData(t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int}) where {T<:Union{Real, Missing}, Y<:Union{Real, Missing}}
+    length(t) == size(y, 1) || error("Length of t must match number of rows in y")
+    length(t) == length(ids) || error("Length of t must match length of ids")
+
+    # Convert ids to numbered IDs starting from 1
+    id_map = Dict{Int, Int}(current_id => new_id for (new_id, current_id) in enumerate(unique(ids)))
+    mapped_ids = [id_map[id] for id in ids]
+
+
+    return new{T, Y}(collect(t), collect(y), collect(mapped_ids))
 end
+
+end
+
+
 
 """
     subset_view(data::MixtureData, subject_ids)
@@ -40,3 +55,24 @@ function subset_view(data::MixtureData, subject_id::Int)
     return view(data.t, mask), view(data.y, mask, :)
 end
 
+function subject_data(data::MixtureData, subject_id::Int)
+    mask = data.ids .== subject_id
+    return copy(data.t[mask]), copy(data.y[mask, :]), copy(data.ids[mask])
+end
+
+function sample_subset_with_replacement(data::MixtureData, n_ids::Int; rng::AbstractRNG=Random.GLOBAL_RNG)
+
+    # sample subject IDs with replacement
+    unique_ids = unique(data.ids)
+    sampled_ids = rand(rng, unique_ids, n_ids)
+
+    t_sample, y_sample, ids_sample = subject_data(data, sampled_ids[1])
+
+    for i in 2:n_ids
+        t_i, y_i, ids_i = subject_data(data, sampled_ids[i])
+        t_sample = vcat(t_sample, t_i)
+        y_sample = vcat(y_sample, y_i)
+        ids_sample = vcat(ids_sample, ids_i)
+    end
+    return MixtureData(t_sample, y_sample, ids_sample)
+end

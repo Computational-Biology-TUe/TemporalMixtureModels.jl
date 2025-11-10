@@ -11,12 +11,25 @@ struct MixtureResult
     component::Component
     n_clusters::Int
     parameters::Vector{Vector{Float64}}
+    variances::Matrix{Float64}
     cluster_probs::Vector{Float64}
     responsibilities::Matrix{Float64}
     loglikelihood::Float64
     converged::Bool
     n_iterations::Int
     error_model::ErrorModel
+end
+
+function predict(result::MixtureResult, t::Real, inputs=nothing)
+    n_clusters = result.n_clusters
+    y_preds = [predict(result.component, result.parameters[k], [t], inputs)[1, :] for k in 1:n_clusters]
+    return y_preds
+end
+
+function predict(result::MixtureResult, t::AbstractVector, inputs=nothing)
+    n_clusters = result.n_clusters
+    y_preds = [predict(result.component, result.parameters[k], t, inputs) for k in 1:n_clusters]
+    return y_preds
 end
 
 # ============================================================================
@@ -91,6 +104,18 @@ function e_step!(responsibilities::Matrix{Float64},
     return nothing
 end
 
+function posterior_responsibilities(result::MixtureResult, data::MixtureData)
+    n_obs = length(unique(data.ids))
+    n_clusters = result.n_clusters
+    R = zeros(n_obs, n_clusters)
+
+    e_step!(R, data, result.component, result.parameters, 
+            result.cluster_probs, result.error_model, 
+            result.variances, nothing)
+
+    return R
+end
+
 # ============================================================================
 # M-Step: Update Parameters
 # ============================================================================
@@ -140,14 +165,16 @@ function fit_weighted!(parameters, component::CompositeComponent,
         yv = Float64.(data.y[.!missing_mask, y_range])
         Wv_c = Wv[.!missing_mask]
 
-        println(sum(Wv_c))
-        if sum(Wv_c) > n_parameters(component)
+        #println(param_range)
+
+        if sum(Wv_c) > n_parameters(comp)
             # Fit component with weights
-            fit!(parameters[param_range], comp, tv, yv, Wv_c, inputs)
+            fit!(view(parameters, param_range), comp, tv, yv, Wv_c, inputs)
         else
             # If no samples assigned to this component, reinitialize by fitting to all data
-            fit!(parameters[param_range], comp, tv, yv, inputs)
+            fit!(view(parameters, param_range), comp, tv, yv, inputs)
         end
+
     end
 
 end
@@ -284,6 +311,103 @@ function mixture_variance(component::Component, error_model::ErrorModel, data::M
     return variances
 end
 
+function _fit_single_mixture(component::Component, n_components::Int, 
+                     data::MixtureData,
+                     error_model::ErrorModel,
+                     inputs,
+                     max_iter::Int,
+                     tol::Float64,
+                     verbose::Bool)
+    
+    # Initialize parameters
+    parameters = [initialize_parameters(component) for _ in 1:n_components]
+    mixture_weights = ones(n_components) ./ n_components
+    
+    # Initialize responsibilities randomly
+    responsibilities = rand(length(unique(data.ids)), n_components)
+    row_normalize!(responsibilities)
+    # resps = rand(length(unique(data.ids)), n_components)
+    # responsibilities[argmax(resps, dims=2)] .= 1.0
+
+    variances = mixture_variance(component, error_model, data, parameters, responsibilities, inputs)
+    
+    # EM iterations
+    prev_loglik = -Inf
+    converged = false
+    iter = 0
+
+    for iter in 1:max_iter
+        # E-step
+        e_step!(responsibilities, data, component, parameters, 
+                mixture_weights, error_model, variances, inputs)
+        
+        # M-step
+        m_step!(parameters, mixture_weights, data, component, responsibilities, inputs)
+
+        # Update variances
+        variances = mixture_variance(component, error_model, data, parameters, responsibilities, inputs)
+
+        # Compute log-likelihood
+        loglik = compute_total_loglikelihood(data, component, parameters, variances,
+                                            mixture_weights, error_model, inputs)
+        
+        # Check convergence
+        if abs(loglik - prev_loglik) < tol
+            converged = true
+            verbose && println("Converged at iteration $iter")
+            verbose && println("Final log-likelihood: $(round(loglik, digits=4))")
+            break
+        end
+        
+        prev_loglik = loglik
+        
+        if verbose && (iter % 10 == 0 || iter == 1)
+            println("Iteration $iter: log-likelihood = $(round(loglik, digits=4))")
+        end
+    end
+    
+    if !converged && verbose
+        println("Did not converge after $max_iter iterations")
+        println("Final log-likelihood: $(round(prev_loglik, digits=4))")
+    end
+    
+    return MixtureResult(
+        component,
+        n_components,
+        parameters,
+        variances,
+        mixture_weights,
+        responsibilities,
+        prev_loglik,
+        converged,
+        iter,
+        error_model
+    )
+end
+
+function _fit_mixtures(component::Component, n_components::Int, 
+                     data::MixtureData,
+                     error_model::ErrorModel,
+                     inputs,
+                     max_iter::Int,
+                     tol::Float64,
+                     verbose::Bool,
+                     n_repeats::Int)
+    
+    results = MixtureResult[]
+    for repeat in 1:n_repeats
+        verbose && println("Starting EM repeat $repeat/$n_repeats")
+        result = _fit_single_mixture(
+            component, n_components, data, error_model, inputs, max_iter, tol, verbose
+        )
+        push!(results, result)
+    end
+
+    # Select best result based on log-likelihood
+    best_result = argmax(r -> r.loglikelihood, results)
+    return best_result
+end
+
 
 """
     fit_mixture(component, n_clusters, t, y, ids; 
@@ -326,6 +450,7 @@ result = fit_mixture(model, 3, t, y_multi, ids; error_model=PoissonError())
 function fit_mixture(component::Component, n_components::Int, 
                      t::AbstractVector, y::AbstractMatrix, 
                      ids::AbstractVector;
+                     n_repeats::Int=5,
                      error_model::ErrorModel=NormalError(),
                      inputs=nothing,
                      max_iter::Int=100,
@@ -339,79 +464,16 @@ function fit_mixture(component::Component, n_components::Int,
     
     data = MixtureData(t, y, ids)
     
-    # Initialize parameters
-    parameters = [initialize_parameters(component) for _ in 1:n_components]
-    mixture_weights = ones(n_components) ./ n_components
-    
-    # Initialize responsibilities randomly
-    responsibilities = zeros(length(unique(data.ids)), n_components)
-    resps = rand(length(unique(data.ids)), n_components)
-    responsibilities[argmax(resps, dims=2)] .= 1.0
-
-    variances = mixture_variance(component, error_model, data, parameters, responsibilities, inputs)
-    
-    # EM iterations
-    prev_loglik = -Inf
-    converged = false
-    iter = 0
-    
-    for iter in 1:max_iter
-        # E-step
-        e_step!(responsibilities, data, component, parameters, 
-                mixture_weights, error_model, variances, inputs)
-        
-        # M-step
-        m_step!(parameters, mixture_weights, data, component, responsibilities, inputs)
-
-        # Update variances
-        variances = mixture_variance(component, error_model, data, parameters, responsibilities, inputs)
-
-        # Compute log-likelihood
-        loglik = compute_total_loglikelihood(data, component, parameters, variances,
-                                            mixture_weights, error_model, inputs)
-        
-        # Check convergence
-        if abs(loglik - prev_loglik) < tol
-            converged = true
-            verbose && println("Converged at iteration $iter")
-            verbose && println("Final log-likelihood: $(round(loglik, digits=4))")
-            break
-        end
-        
-        prev_loglik = loglik
-        
-        if verbose && (iter % 10 == 0 || iter == 1)
-            println("Iteration $iter: log-likelihood = $(round(loglik, digits=4))")
-        end
-    end
-    
-    if !converged && verbose
-        println("Did not converge after $max_iter iterations")
-        println("Final log-likelihood: $(round(prev_loglik, digits=4))")
-    end
-    
-    # Assign subjects to most likely cluster
-    # assignments = Dict{Any, Int}()
-    # @inbounds for (subj_idx, subject) in enumerate(data.subjects)
-    #     assignments[subject.id] = argmax(view(responsibilities, subj_idx, :))
-    # end
-    
-    return MixtureResult(
-        component,
-        n_components,
-        parameters,
-        mixture_weights,
-        responsibilities,
-        prev_loglik,
-        converged,
-        iter,
-        error_model
+    return _fit_mixtures(
+        component, n_components, data, error_model, inputs, 
+        max_iter, tol, verbose, n_repeats
     )
 end
 
 function fit_mixture(component::Component, n_components::Int, 
                      t::AbstractVector, y::AbstractVector, 
                      ids::AbstractVector;
+                     n_repeats::Int=5,
                      error_model::ErrorModel=NormalError(),
                      inputs=nothing,
                      max_iter::Int=100,
@@ -420,16 +482,12 @@ function fit_mixture(component::Component, n_components::Int,
     # Convert y to matrix
     y_matrix = reshape(y, length(y), 1)
     return fit_mixture(component, n_components, t, y_matrix, ids;
+                          n_repeats=n_repeats,
                        error_model=error_model,
                        inputs=inputs,
                        max_iter=max_iter,
                        tol=tol,
                        verbose=verbose)
 end
-
-    # # Convert y to matrix if it's a vector
-    # if y isa AbstractVector
-    #     y = reshape(y, length(y), 1)
-    # end
 
 # TODO: Dispatch on initial subject assignment
