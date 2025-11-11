@@ -8,9 +8,11 @@ using Hungarian
 using ProgressMeter
 using SpecialFunctions
 using CairoMakie
+using RequiredInterfaces
 
 include("data.jl")
-include("components.jl")
+include("components/core.jl")
+include("components/polynomialregression.jl")
 include("composition.jl")
 include("errormodels.jl")
 include("solve.jl")
@@ -23,6 +25,82 @@ println("Example 1: Normal Error Model")
 println("="^70)
 
 Random.seed!(1234)
+
+function example_bp_data(;n_subjects_drug=50, n_subjects_placebo=50, n_timepoints=5)
+
+    ids = Int[]
+    t = Float64[]
+    bp_sys = Float64[]
+    bp_dia = Float64[]
+    class_labels = Int[]
+
+    tp = LinRange(0.0, 5.0, n_timepoints)
+
+    for i in 1:n_subjects_drug
+
+        base_sys = 120 + randn()*5
+        base_dia = 80 + randn()*3
+
+        for j in tp
+
+            random_noise_sys = randn()*5.1
+            random_noise_dia = randn()*3.2
+
+            effect_noise_sys = randn()*0.3
+            effect_noise_dia = randn()*0.14
+            push!(ids, i)
+            push!(t, Float64(j))
+            systolic = base_sys - 8.8*j*(1+effect_noise_sys) + 0.8*j^2 + random_noise_sys
+            diastolic = base_dia - 6.43*j*(1+effect_noise_dia) + 0.64*j^2 + random_noise_dia
+            push!(bp_sys, systolic)
+            push!(bp_dia, diastolic)
+            push!(class_labels, 1)
+        end
+    end
+
+    for i in n_subjects_drug+1:n_subjects_drug+n_subjects_placebo
+
+        base_sys = 120 + randn()*5
+        base_dia = 80 + randn()*3
+
+        for j in tp
+
+            random_noise_sys = randn()*5.1
+            random_noise_dia = randn()*3.2
+
+            effect_noise_sys = randn()*0.3
+            effect_noise_dia = randn()*0.14
+            push!(ids, i)
+            push!(t, Float64(j))
+            systolic = base_sys - j*effect_noise_sys + random_noise_sys
+            diastolic = base_dia - j*effect_noise_dia + random_noise_dia
+            push!(bp_sys, systolic)
+            push!(bp_dia, diastolic)
+            push!(class_labels, 0)
+        end
+    end
+
+    return t, hcat(bp_sys, bp_dia), ids, class_labels
+end
+
+t, y, ids, class_labels = example_bp_data(;n_subjects_drug=21, n_subjects_placebo=22, n_timepoints=5)
+
+figure_example_bp_data = let f = Figure(size=(600, 300))
+
+    ax1 = Axis(f[1,1], ylabel="Systolic BP", xlabel="Time")
+    ax2 = Axis(f[1,2], ylabel="Diastolic BP", xlabel="Time")
+
+    for id in unique(ids)
+        mask = ids .== id
+        class = class_labels[findfirst(mask)]
+        color = class == 1 ? 1 : 2
+        lines!(ax1, t[mask], y[mask,1], color=Makie.wong_colors()[color], alpha=0.5)
+        lines!(ax2, t[mask], y[mask,2], color=Makie.wong_colors()[color], alpha=0.5)
+    end
+
+    f
+end
+
 
 function generate_normal_data(n_subjects=50, n_timepoints=20)
     df = DataFrame(

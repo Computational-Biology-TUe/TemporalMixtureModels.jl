@@ -104,6 +104,8 @@ function e_step!(responsibilities::Matrix{Float64},
     return nothing
 end
 
+# TODO: Make posterior_responsibilities for user API using (t, y, ids, inputs)-structure
+
 function posterior_responsibilities(result::MixtureResult, data::MixtureData)
     n_obs = length(unique(data.ids))
     n_clusters = result.n_clusters

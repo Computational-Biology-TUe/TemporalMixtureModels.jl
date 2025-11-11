@@ -6,7 +6,14 @@ push!(LOAD_PATH, "../src/")
 makedocs(
     sitename="TemporalMixtureModels.jl",
     pages= [
-        "Getting Started" => "index.md",
+        "Home" => "index.md",
+        "Manual" => [
+            "Basic Usage" => "manual/usage.md",
+            "Multiple Output Variables" => "manual/multivariate.md",
+            "Custom Model Components" => "manual/custom_components.md",
+            "Model Selection" => "manual/model_selection.md",
+            "Bootstrapping for Uncertainty Estimation" => "manual/bootstrap.md",
+        ],
         "Tutorials" => [
             "Univariate" => "tutorials/univariate.md",
             "Multivariate" => "tutorials/multivariate.md",

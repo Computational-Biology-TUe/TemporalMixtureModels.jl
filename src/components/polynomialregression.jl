@@ -1,14 +1,4 @@
 """
-Abstract type for all component models.
-Custom models should subtype this and implement:
-- `n_parameters(component)`: return number of parameters
-- `predict(component, params, t, inputs)`: return predicted values
-- `initialize_parameters(component)`: return initial parameter values
-"""
-abstract type Component end
-
-
-"""
     PolynomialRegression(degree::Int)
 
 Polynomial regression component model.
@@ -25,15 +15,22 @@ struct PolynomialRegression <: Component
     end
 end
 
+function basis(t::AbstractVector{T}, degree::Int) where T<:Real
+    N = length(t)
+    X = ones(T, N, degree + 1)
+    for d in 1:degree
+        X[:, d + 1] = t .^ d
+    end
+    return X
+end
+
+# Necessary methods for Component interface implementation
 n_parameters(m::PolynomialRegression) = m.degree + 1
 
 function initialize_parameters(m::PolynomialRegression)
     return randn(n_parameters(m)) .* 0.1
 end
 
-"""
-Predict using polynomial regression (optimized version)
-"""
 function predict(m::PolynomialRegression, params::AbstractVector, 
                 t::AbstractVector, inputs=nothing)
     n = length(t)
@@ -50,15 +47,6 @@ function predict(m::PolynomialRegression, params::AbstractVector,
     end
     
     return y_pred
-end
-
-function basis(t::AbstractVector{T}, degree::Int) where T<:Real
-    N = length(t)
-    X = ones(T, N, degree + 1)
-    for d in 1:degree
-        X[:, d + 1] = t .^ d
-    end
-    return X
 end
 
 function fit!(parameters, model::PolynomialRegression, t::AbstractVector, y::AbstractArray, inputs=nothing)
