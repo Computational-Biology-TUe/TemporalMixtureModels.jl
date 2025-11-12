@@ -1,6 +1,6 @@
 name = "TemporalMixtureModels"
 uuid = "04cebb6a-72a2-4d9b-bd91-f7dfea97eb3c"
-version = "0.1.2"
+version = "2.0.0"
 authors = ["max-de-rooij <54850292+max-de-rooij@users.noreply.github.com>"]
 
 [deps]
@@ -38,4 +38,4 @@ SCS = "2.2"
 SpecialFunctions = "2.6.1"
 Statistics = "1.10 - 1.12"
 StructArrays = "0.7"
-julia = "1.10.10, 1.11, 1.12"
+julia = "1.11, 1.12"

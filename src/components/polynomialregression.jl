@@ -49,12 +49,12 @@ function predict(m::PolynomialRegression, params::AbstractVector,
     return y_pred
 end
 
-function fit!(parameters, model::PolynomialRegression, t::AbstractVector, y::AbstractArray, inputs=nothing)
+function fit!(parameters::AbstractVector{T}, model::PolynomialRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, ::Any) where T<:Real
     Ξ = basis(t, model.degree)
     parameters .= LS.solve(LS.LinearProblem(Ξ, y[:])).u
 end
 
-function fit!(parameters, model::PolynomialRegression, t::AbstractVector, y::AbstractArray, w::AbstractVector, inputs=nothing)
+function fit!(parameters::AbstractVector{T}, model::PolynomialRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, w::AbstractVector{T}, ::Any) where T<:Real
     # No need to build W as a matrix
     Wv = view(w, :)
     Ξ = basis(t, model.degree)

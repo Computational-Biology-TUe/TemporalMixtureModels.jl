@@ -62,7 +62,36 @@ end
 """
     @component begin ... end
 
-Macro for specifying a composite component with multiple measurements.
+The `@component` macro allows defining a `CompositeComponent` in a concise way. We use composite components to connect component models to specific measurements in multivariate data. Each line inside the `begin ... end` block should specify a mapping from a measurement (or range of measurements) to a component model using the syntax 
+```
+y[index] ~ ComponentModel(args...)
+```
+
+All indices refer to the *columns* of the observation matrix `y`. The macro collects all specified components and their corresponding measurement indices, and constructs a `CompositeComponent` instance. The resulting `CompositeComponent` can then be used in mixture model fitting, in the same way as regular components.
+
+# Example
+
+## Simple Composite Component
+```julia
+using TemporalMixtureModels
+
+component = @component begin
+    y[1] ~ PolynomialRegression(2)  # Quadratic for measurement 1
+    y[2] ~ PolynomialRegression(3)  # Cubic for measurement 2
+end
+```
+
+## Composite Component with Ranges
+While the `PolynomialRegression` component only models a single measurement, you can also use components that model multiple measurements at once. For example, if you have a bivariate measurement that you want to model with a single component (here abstracted as `BivariateComponent`), you can specify a range of indices:
+
+```julia
+using TemporalMixtureModels
+
+component = @component begin
+    y[1] ~ PolynomialRegression(2)  # Quadratic for measurement 1
+    y[2:3] ~ BivariateComponent()  # A bivariate component for measurements 2 and 3
+end
+```
 """
 macro component(expr)
     components = []

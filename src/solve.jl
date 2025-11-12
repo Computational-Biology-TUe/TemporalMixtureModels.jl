@@ -104,8 +104,6 @@ function e_step!(responsibilities::Matrix{Float64},
     return nothing
 end
 
-# TODO: Make posterior_responsibilities for user API using (t, y, ids, inputs)-structure
-
 function posterior_responsibilities(result::MixtureResult, data::MixtureData)
     n_obs = length(unique(data.ids))
     n_clusters = result.n_clusters
@@ -116,6 +114,13 @@ function posterior_responsibilities(result::MixtureResult, data::MixtureData)
             result.variances, nothing)
 
     return R
+end
+
+function posterior_responsibilities(result::MixtureResult, t::AbstractVector, y::AbstractMatrix, ids::AbstractVector; inputs=nothing)
+
+    data = MixtureData(t, y, ids)
+
+    return posterior_responsibilities(result, data)
 end
 
 # ============================================================================
@@ -412,41 +417,44 @@ end
 
 
 """
-    fit_mixture(component, n_clusters, t, y, ids; 
-                error_model=NormalError(), inputs=nothing, 
+    fit_mixture(component, n_components, t, y, ids;
+                n_repeats=5, error_model=NormalError(), inputs=nothing, 
                 max_iter=100, tol=1e-6, verbose=true)
 
-Fit a mixture model using optimized EM algorithm.
+Fit a mixture model using the Expectation-Maximization (EM) algorithm. By default, `fit_mixture` will run 5 EM restarts and return the best fitting model based on log-likelihood.
 
 # Arguments
 - `component`: A Component model (e.g., PolynomialRegression(2))
-- `n_clusters`: Number of mixture components/clusters
+- `n_components`: Number of mixture components/clusters
 - `t`: Time points (vector)
 - `y`: Measurements (vector for single measurement, matrix for multiple)
 - `ids`: Subject identifiers (vector)
 
 # Keyword Arguments
-- `error_model`: Error distribution (NormalError(), PoissonError(), or LogNormalError())
-- `inputs`: Additional input variables (e.g., [body_mass])
+- `n_repeats`: Number of EM restarts (default: 5)
+- `error_model`: Error distribution (currently only NormalError() is supported, included for possible future extensions)
+- `inputs`: Additional input variables to be passed to the component model (default: nothing)
 - `max_iter`: Maximum EM iterations (default: 100)
 - `tol`: Convergence tolerance (default: 1e-6)
 - `verbose`: Print progress (default: true)
 
 # Returns
-- `MixtureResult` containing fitted parameters and cluster assignments
+- `MixtureResult` containing fitted parameters and cluster assignments, with fields:
+    - `component`: The component model used
+    - `n_clusters`: Number of clusters
+    - `parameters`: Fitted parameters for each cluster
+    - `variances`: Estimated variances for each measurement and cluster
+    - `cluster_probs`: Mixing proportions for each cluster
+    - `responsibilities`: Posterior responsibilities for each subject and cluster
+    - `loglikelihood`: Final log-likelihood of the fitted model
+    - `converged`: Boolean indicating if the EM algorithm converged
+    - `n_iterations`: Number of iterations performed
+    - `error_model`: The error model used
 
 # Examples
 ```julia
 # Single measurement with normal errors
 result = fit_mixture(PolynomialRegression(2), 3, t, y, ids)
-
-# Multiple measurements with Poisson errors
-y_multi = hcat(glucose, insulin)
-model = @component begin
-    y[1] ~ PolynomialRegression(2)
-    y[2] ~ PolynomialRegression(3)
-end
-result = fit_mixture(model, 3, t, y_multi, ids; error_model=PoissonError())
 ```
 """
 function fit_mixture(component::Component, n_components::Int, 

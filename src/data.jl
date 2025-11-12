@@ -30,8 +30,6 @@ end
 
 end
 
-
-
 """
     subset_view(data::MixtureData, subject_ids)
 
@@ -75,4 +73,85 @@ function sample_subset_with_replacement(data::MixtureData, n_ids::Int; rng::Abst
         ids_sample = vcat(ids_sample, ids_i)
     end
     return MixtureData(t_sample, y_sample, ids_sample)
+end
+
+
+"""
+    example_bp_data(;n_subjects_drug=50, n_subjects_placebo=50, n_timepoints=5, rng::AbstractRNG=Random.GLOBAL_RNG)
+
+Generate example blood pressure data for testing and examples.
+
+# Arguments
+- `n_subjects_drug`: Number of subjects in the drug group (default: 50)
+- `n_subjects_placebo`: Number of subjects in the placebo group (default: 50)
+- `n_timepoints`: Number of time points per subject (default: 5)
+- `rng`: Random number generator (default: `Random.GLOBAL_RNG`)
+
+# Returns
+- `t`: Vector of time points
+- `y`: Matrix of blood pressure measurements (systolic and diastolic)
+- `ids`: Vector of subject IDs
+- `class_labels`: Vector of class labels (1 for drug, 0 for placebo)
+
+# Example
+```julia
+using TemporalMixtureModels: example_bp_data
+t, y, ids, class_labels = example_bp_data(n_subjects_drug=30, n_subjects_placebo=30, n_timepoints=4)
+```
+"""
+function example_bp_data(;n_subjects_drug=50, n_subjects_placebo=50, n_timepoints=5, rng::AbstractRNG=Random.GLOBAL_RNG)
+
+    ids = Int[]
+    t = Float64[]
+    bp_sys = Float64[]
+    bp_dia = Float64[]
+    class_labels = Int[]
+
+    tp = LinRange(0.0, 5.0, n_timepoints)
+
+    for i in 1:n_subjects_drug
+
+        base_sys = 120 + randn(rng)*5
+        base_dia = 80 + randn(rng)*3
+
+        for j in tp
+
+            random_noise_sys = randn(rng)*5.1
+            random_noise_dia = randn(rng)*3.2
+
+            effect_noise_sys = randn(rng)*0.3
+            effect_noise_dia = randn(rng)*0.14
+            push!(ids, i)
+            push!(t, Float64(j))
+            systolic = base_sys - 8.8*j*(1+effect_noise_sys) + 0.8*j^2 + random_noise_sys
+            diastolic = base_dia - 6.43*j*(1+effect_noise_dia) + 0.64*j^2 + random_noise_dia
+            push!(bp_sys, systolic)
+            push!(bp_dia, diastolic)
+            push!(class_labels, 1)
+        end
+    end
+
+    for i in n_subjects_drug+1:n_subjects_drug+n_subjects_placebo
+
+        base_sys = 120 + randn(rng)*5
+        base_dia = 80 + randn(rng)*3
+
+        for j in tp
+
+            random_noise_sys = randn(rng)*5.1
+            random_noise_dia = randn(rng)*3.2
+
+            effect_noise_sys = randn(rng)*0.3
+            effect_noise_dia = randn(rng)*0.14
+            push!(ids, i)
+            push!(t, Float64(j))
+            systolic = base_sys - j*effect_noise_sys + random_noise_sys
+            diastolic = base_dia - j*effect_noise_dia + random_noise_dia
+            push!(bp_sys, systolic)
+            push!(bp_dia, diastolic)
+            push!(class_labels, 0)
+        end
+    end
+
+    return t, hcat(bp_sys, bp_dia), ids, class_labels
 end

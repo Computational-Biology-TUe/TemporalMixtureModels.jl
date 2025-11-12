@@ -1,31 +1,39 @@
-
 """
-Run bootstrap resampling to estimate confidence intervals for the coefficients of each component in a mixture model.
+    bootstrap(component::Component, n_components::Int, n_bootstrap::Int, 
+    t::AbstractVector, y::AbstractMatrix, ids::AbstractVector;
+    n_repeats::Int=5,
+    error_model::ErrorModel=NormalError(),
+    inputs=nothing,
+    max_iter::Int=100,
+    tol::Float64=1e-6,
+    separation_threshold::Float64=0.01,
+    rng::AbstractRNG=Random.GLOBAL_RNG,
+    show_progress_bar::Bool=true)
 
-## Arguments
-- `model::AbstractMixtureModel{T}`: The fitted mixture model
-- `df::DataFrame`: The input DataFrame containing the data.
+Run bootstrap resampling to estimate confidence intervals for the coefficients of each component in a mixture model. The function fits the mixture model multiple times on bootstrap samples drawn with replacement from the original data. After fitting, it matches the components to the original fit to prevent label switching and collects the parameter estimates. Separation scores are computed to detect ambiguities in component matching, which may indicate unreliable confidence intervals. This can happen if the components aren't well separated, for example when too many components are specified.
 
-### Optional keyword arguments
-- `n_bootstrap::Int=100`: Number of bootstrap samples to draw.
-- `alpha::Float64=0.05`: Significance level for the confidence intervals (e.g., 0.05 for 95% CI).
+# Arguments
+- `component::Component`: The component model to use (e.g., `PolynomialRegression`).
+- `n_components::Int`: Number of mixture components (clusters).
+- `n_bootstrap::Int`: Number of bootstrap samples to draw.
+- `t::AbstractVector`: Time points vector.
+- `y::AbstractMatrix`: Observations matrix (rows: time points, columns: measurements).
+- `ids::AbstractVector`: Subject IDs vector.
+
+# Optional keyword arguments
+- `n_repeats::Int=5`: Number of random initializations for fitting.
+- `error_model::ErrorModel=NormalError()`: Error model to use. Only `NormalError` is currently supported.
+- `inputs=nothing`: Additional inputs for the component model (if applicable).
+- `max_iter::Int=100`: Maximum number of EM iterations.
+- `tol::Float64=1e-6`: Convergence tolerance for the EM algorithm.
+- `separation_threshold::Float64=0.01`: Threshold for detecting ambiguities in component matching.
 - `rng::AbstractRNG=Random.GLOBAL_RNG`: Random number generator to use.
-- `prog::Bool=true`: Whether to show a progress bar.
+- `show_progress_bar::Bool=true`: Whether to show a progress bar.
 
-## Returns
-
-### In case of a univariate mixture model
-- `ci_results::Vector{Dict{Symbol, Any}}`: A vector where each element corresponds to a component and contains a dictionary with keys `:lower` and `:upper` for the confidence intervals of the coefficients.
-- `component_samples::Vector{Vector{Vector{T}}}`: A vector where each element corresponds to a component and contains a vector of coefficient samples from the bootstrap resampling.
-- `ambiguities_detected::Int`: The number of ambiguities detected during component matching in the bootstrap resampling. A high number may indicate unreliable confidence intervals due to uncertain sample assignment to components.
-
-### In case of a multivariate mixture model
-- `ci_results::Vector{Dict{Symbol, Any}}`: A vector where each element corresponds to a component and contains a dictionary. Each dictionary has variable names as keys and values are tuples with keys `:lower` and `:upper` for the confidence intervals of the coefficients for that variable.
-- `component_samples::Vector{Dict{Symbol, Vector{Vector{T}}}}`: A vector where each element corresponds to a component and contains a dictionary. Each dictionary has variable names as keys and values are vectors of coefficient samples from the bootstrap resampling for that variable.
+# Returns
+- `bootstrap_results::Vector{MixtureResult}`: A vector of `MixtureResult` objects from each bootstrap sample.
 - `ambiguities_detected::Int`: The number of ambiguities detected during component matching in the bootstrap resampling. A high number may indicate unreliable confidence intervals due to uncertain sample assignment to components.
 """
-
-
 function bootstrap(component::Component, n_components::Int, n_bootstrap::Int, t::AbstractVector, y::AbstractMatrix, ids::AbstractVector;
     n_repeats::Int=5,
     error_model::ErrorModel=NormalError(),
