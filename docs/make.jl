@@ -11,7 +11,7 @@ makedocs(
             "Basic Usage" => "manual/usage.md",
             "Multiple Output Variables" => "manual/multivariate.md",
             "Bootstrapping for Uncertainty Estimation" => "manual/bootstrap.md",
-            #"Custom Model Components" => "manual/custom_components.md",
+            "Custom Model Components" => "manual/custom_components.md",
             #"Model Selection" => "manual/model_selection.md",
             #"Bootstrapping for Uncertainty Estimation" => "manual/bootstrap.md",
         ],

@@ -7,3 +7,5 @@ To perform bootstrapping with TemporalMixtureModels.jl, you can use the `bootstr
 ```@docs 
 bootstrap
 ```
+
+The `bootstrap` function returns a vector of fitted mixture models, each corresponding to a bootstrap sample. We can then predict using each of these models to obtain a distribution of predictions, which can then also be used to estimate confidence intervals.

@@ -11,7 +11,7 @@ struct MixtureResult
     component::Component
     n_clusters::Int
     parameters::Vector{Vector{Float64}}
-    variances::Matrix{Float64}
+    params_error::Vector{Vector{Float64}}
     cluster_probs::Vector{Float64}
     responsibilities::Matrix{Float64}
     loglikelihood::Float64
@@ -41,14 +41,14 @@ function component_loglikelihood(component::Component,
                                  t::AbstractVector{Float64},
                                  y::AbstractMatrix{Float64},
                                  error_model::ErrorModel,
-                                 component_variances::Vector{Float64},
+                                 component_params_error::Vector{Float64},
                                  inputs)
     y_pred = predict(component, params, t, inputs)
     ll = 0.0
 
     for j in axes(y, 2)
         residuals = y[:, j] - y_pred[:, j]
-        ll += loglikelihood(error_model, residuals, component_variances[j])
+        ll += loglikelihood(error_model, residuals, component_params_error[j])
     end
 
     return ll
@@ -66,7 +66,7 @@ function e_step!(responsibilities::Matrix{Float64},
                 parameters::Vector{Vector{Float64}},
                 mixture_weights::Vector{Float64},
                 error_model::ErrorModel,
-                variances::Matrix{Float64},
+                params_error::Vector{Vector{Float64}},
                 inputs)
     
     n_clusters = length(parameters)
@@ -84,7 +84,7 @@ function e_step!(responsibilities::Matrix{Float64},
         # Compute log probabilities for each cluster
         for k in 1:n_clusters
             log_probs[k] = log(mixture_weights[k]) + component_loglikelihood(
-                component, parameters[k], tv, yv, error_model, variances[k, :], inputs
+                component, parameters[k], tv, yv, error_model, params_error[k], inputs
             )
         end
         
@@ -111,7 +111,7 @@ function posterior_responsibilities(result::MixtureResult, data::MixtureData)
 
     e_step!(R, data, result.component, result.parameters, 
             result.cluster_probs, result.error_model, 
-            result.variances, nothing)
+            result.params_error, nothing)
 
     return R
 end
@@ -229,7 +229,7 @@ Compute total log-likelihood of the mixture model.
 function compute_total_loglikelihood(data::MixtureData,
                                     component::Component,
                                     parameters::Vector{Vector{Float64}},
-                                    variances::Matrix{Float64},
+                                    params_error::Vector{Vector{Float64}},
                                     probs::Vector{Float64},
                                     error_model::ErrorModel,
                                     inputs)
@@ -253,7 +253,7 @@ function compute_total_loglikelihood(data::MixtureData,
             
             # Sum over measurements
             log_prob += component_loglikelihood(
-                component, parameters[k], tv, yv, error_model, variances[k, :], inputs
+                component, parameters[k], tv, yv, error_model, params_error[k], inputs
             )
 
             
@@ -285,7 +285,7 @@ end
 # Main Fitting Function
 # ============================================================================
 
-function mixture_variance(component::Component, error_model::ErrorModel, data::MixtureData, 
+function error_model_parameters(component::Component, error_model::NormalError, data::MixtureData, 
                           parameters::Vector{Vector{Float64}},
                           responsibilities::Matrix{Float64},
                           inputs)
@@ -304,18 +304,18 @@ function mixture_variance(component::Component, error_model::ErrorModel, data::M
 
     # Compute variance
     y_pred = [predict(component, p, data.t, inputs) for p in parameters]
-    variances = zeros(n_components, n_variables)
+    params_error = [zeros(n_variables) for _ in 1:n_components]
     for k in 1:n_components
         predictions = y_pred[k]
         for j in 1:n_variables
             missing_mask = .!ismissing.(data.y[:, j])
 
             residuals = data.y[missing_mask, j] - predictions[missing_mask, j]
-            variances[k, j] = variance(error_model, residuals, view(responsibilities_per_point, missing_mask, k))
+            params_error[k][j] = variance(error_model, residuals, view(responsibilities_per_point, missing_mask, k))
         end
     end
 
-    return variances
+    return params_error
 end
 
 function _fit_single_mixture(component::Component, n_components::Int, 
@@ -336,7 +336,7 @@ function _fit_single_mixture(component::Component, n_components::Int,
     # resps = rand(length(unique(data.ids)), n_components)
     # responsibilities[argmax(resps, dims=2)] .= 1.0
 
-    variances = mixture_variance(component, error_model, data, parameters, responsibilities, inputs)
+    params_error = error_model_parameters(component, error_model, data, parameters, responsibilities, inputs)
     
     # EM iterations
     prev_loglik = -Inf
@@ -346,16 +346,16 @@ function _fit_single_mixture(component::Component, n_components::Int,
     for iter in 1:max_iter
         # E-step
         e_step!(responsibilities, data, component, parameters, 
-                mixture_weights, error_model, variances, inputs)
+                mixture_weights, error_model, params_error, inputs)
         
         # M-step
         m_step!(parameters, mixture_weights, data, component, responsibilities, inputs)
 
-        # Update variances
-        variances = mixture_variance(component, error_model, data, parameters, responsibilities, inputs)
+        # Update error model parameters
+        params_error = error_model_parameters(component, error_model, data, parameters, responsibilities, inputs)
 
         # Compute log-likelihood
-        loglik = compute_total_loglikelihood(data, component, parameters, variances,
+        loglik = compute_total_loglikelihood(data, component, parameters, params_error,
                                             mixture_weights, error_model, inputs)
         
         # Check convergence
@@ -382,7 +382,7 @@ function _fit_single_mixture(component::Component, n_components::Int,
         component,
         n_components,
         parameters,
-        variances,
+        params_error,
         mixture_weights,
         responsibilities,
         prev_loglik,
@@ -443,7 +443,7 @@ Fit a mixture model using the Expectation-Maximization (EM) algorithm. By defaul
     - `component`: The component model used
     - `n_clusters`: Number of clusters
     - `parameters`: Fitted parameters for each cluster
-    - `variances`: Estimated variances for each measurement and cluster
+    - `params_error`: Estimated error model parameters for each measurement and cluster
     - `cluster_probs`: Mixing proportions for each cluster
     - `responsibilities`: Posterior responsibilities for each subject and cluster
     - `loglikelihood`: Final log-likelihood of the fitted model
