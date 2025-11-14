@@ -1,4 +1,4 @@
-using TemporalMixtureModels, DataFrames, Random, Test
+using TemporalMixtureModels, Random, Test
 
 @testset "Univariate Mixture Models" begin
     include("univariate.jl")

@@ -25,3 +25,7 @@ end
 function loglikelihood(::NormalError, residuals::Vector{Float64}, variance::Float64)
     return Distributions.loglikelihood(Normal(0.0, sqrt(variance)), residuals)
 end
+
+function n_free_parameters(::NormalError)
+    return 1  # variance
+end

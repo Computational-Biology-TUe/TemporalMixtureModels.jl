@@ -18,8 +18,7 @@ function generate_univariate_input_data(individuals_per_group, t_values, n_group
         end
     end
 
-    input_data = DataFrame(id = ids, time = timepoints, value = measurements)
-    return input_data
+    ids, timepoints, measurements
 end
 
 @testset "univariate mixture model" begin
@@ -32,27 +31,27 @@ end
                         [1.0, 0.3, -0.02] ] # Group 2: y = 1 + 0.3*t - 0.02*t^2
 
 
-    input_data = generate_univariate_input_data(individuals_per_group, t_values, n_groups, group_coefficients)
+    ids, timepoints, measurements = generate_univariate_input_data(individuals_per_group, t_values, n_groups, group_coefficients)
 
-    model = UnivariateMixtureModel(2, PolynomialRegression(2))
-    fit!(model, input_data)
+    model = PolynomialRegression(2)
+    result = fit_mixture(model, 2, timepoints, measurements, ids)
 
-    @test sum(model.weights) ≈ 1.0 atol=1e-8
-    @test model.converged == true
+    @test sum(result.cluster_probs) ≈ 1.0 atol=1e-8
+    @test result.converged == true
 
-    fit!(model, input_data, hard_assignment=true)
-    @test sum(model.weights) ≈ 1.0 atol=1e-8
-    @test model.converged == true
+    result = fit_mixture(model, 2, timepoints, measurements, ids; max_iter=1)
+    @test result.converged == false
+    @test result.n_iterations == 1
 
-    fit!(model, input_data, max_iter=1)
-    @test model.converged == false
-    @test model.iterations == 1
+    bic_value = bic(result, timepoints, measurements, ids)
+    @test isa(bic_value, Float64)
 
-    @test length(model.components) == 2
+    aic_value = aic(result, timepoints, measurements, ids)
+    @test isa(aic_value, Float64)
 
-    # run bootstrap confidence intervals
-    ci_results, component_samples, ambiguities_detected = bootstrap_ci(model, input_data, n_bootstrap=10)
-    @test length(ci_results) == 2
+    ll_value = loglikelihood(result, timepoints, measurements, ids)
+    @test isa(ll_value, Float64)
+    @test ll_value ≈ result.loglikelihood atol=1e-8
 
 end
 

@@ -10,20 +10,21 @@ module TemporalMixtureModels
 
     include("data.jl")
     include("components/core.jl")
-    include("components/polynomialregression.jl")
+    include("components/regression.jl")
     include("composition.jl")
     include("errormodels.jl")
     include("solve.jl")
     include("bootstrap.jl")
+    include("evaluation.jl")
 
     # sample data for testing and examples
     export example_bp_data
 
     # components base
-    public Component, n_parameters, initialize_parameters, fit!
+    export Component, n_parameters, initialize_parameters, fit!
     
-    # polynomial regression component
-    export PolynomialRegression
+    # regression components
+    export PolynomialRegression, RidgeRegression, LassoRegression
 
     # composition
     export CompositeComponent, @component
@@ -33,10 +34,13 @@ module TemporalMixtureModels
 
     # solving mixture models
     export fit_mixture, predict, posterior_responsibilities
-    public MixtureResult, MixtureData
+    export MixtureResult, MixtureData
     
     # bootstrap
     export bootstrap
+
+    # evaluation metrics
+    export loglikelihood, aic, bic
     
 end # module TemporalMixtureModels
 

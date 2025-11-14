@@ -363,7 +363,18 @@ function _fit_single_mixture(component::Component, n_components::Int,
             converged = true
             verbose && println("Converged at iteration $iter")
             verbose && println("Final log-likelihood: $(round(loglik, digits=4))")
-            break
+            return MixtureResult(
+                component,
+                n_components,
+                parameters,
+                params_error,
+                mixture_weights,
+                responsibilities,
+                loglik,
+                converged,
+                iter,
+                error_model
+            )
         end
         
         prev_loglik = loglik
@@ -387,7 +398,7 @@ function _fit_single_mixture(component::Component, n_components::Int,
         responsibilities,
         prev_loglik,
         converged,
-        iter,
+        max_iter,
         error_model
     )
 end

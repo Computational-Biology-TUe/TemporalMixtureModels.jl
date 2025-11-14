@@ -16,7 +16,7 @@ struct MixtureData{T<:Union{Real, Missing}, Y<:Union{Real, Missing}}
     y::Matrix{Y}
     ids::Vector{Int}
 
-    function MixtureData(t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int}) where {T<:Union{Real, Missing}, Y<:Union{Real, Missing}}
+    function MixtureData(t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int}) where {T<:Real, Y<:Union{Real, Missing}}
     length(t) == size(y, 1) || error("Length of t must match number of rows in y")
     length(t) == length(ids) || error("Length of t must match length of ids")
 

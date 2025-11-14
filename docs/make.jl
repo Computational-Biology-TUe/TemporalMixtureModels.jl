@@ -12,8 +12,9 @@ makedocs(
             "Multiple Output Variables" => "manual/multivariate.md",
             "Bootstrapping for Uncertainty Estimation" => "manual/bootstrap.md",
             "Custom Model Components" => "manual/custom_components.md",
+            "Regularized Regression Components" => "manual/regularized_regression.md",
+            "Evaluation Metrics" => "manual/evaluation_metrics.md",
             #"Model Selection" => "manual/model_selection.md",
-            #"Bootstrapping for Uncertainty Estimation" => "manual/bootstrap.md",
         ],
         # "Tutorials" => [
         #     "Univariate" => "tutorials/univariate.md",

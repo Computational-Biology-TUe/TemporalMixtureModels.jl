@@ -20,9 +20,8 @@ function generate_multivariate_input_data(individuals_per_group, t_values, n_gro
             end
         end
     end
-    input_data = DataFrame(id = [ids; ids], time = [timepoints; timepoints], value = [measurements_y; measurements_z], var_name = repeat(["y", "z"], inner=length(ids)))
 
-    return input_data
+    return ids, timepoints, [measurements_y measurements_z]
 end
 
 @testset "univariate mixture model" begin
@@ -37,27 +36,27 @@ end
                         [3.0, -0.2, 0.04] ] # Group 2: z = 3 - 0.2*t + 0.04*t^2
 
 
-    input_data = generate_multivariate_input_data(individuals_per_group, t_values, n_groups, group_coefficients_y, group_coefficients_z)
+    ids, timepoints, y = generate_multivariate_input_data(individuals_per_group, t_values, n_groups, group_coefficients_y, group_coefficients_z)
 
-    model = MultivariateMixtureModel(2, Dict(:y => PolynomialRegression(2), :z => PolynomialRegression(2)))
-    fit!(model, input_data)
+    model = @component begin
+        y[1] ~ PolynomialRegression(2)  # Quadratic for measurement 1
+        y[2] ~ PolynomialRegression(2)  # Quadratic for measurement 2
+    end
+    result = fit_mixture(model, 2, timepoints, y, ids)
 
-    @test sum(model.weights) ≈ 1.0 atol=1e-8
-    @test model.converged == true
+    @test sum(result.cluster_probs) ≈ 1.0 atol=1e-8
+    @test result.converged == true
 
-    fit!(model, input_data, hard_assignment=true)
-    @test sum(model.weights) ≈ 1.0 atol=1e-8
-    @test model.converged == true
 
-    fit!(model, input_data, max_iter=1)
-    @test model.converged == false
-    @test model.iterations == 1
+    bic_value = bic(result, timepoints, y, ids)
+    @test isa(bic_value, Float64)
 
-    @test length(model.components) == 2
+    aic_value = aic(result, timepoints, y, ids)
+    @test isa(aic_value, Float64)
 
-    # run bootstrap confidence intervals
-    ci_results, component_samples = bootstrap_ci(model, input_data, n_bootstrap=10)
-    @test length(ci_results) == 2
+    ll_value = loglikelihood(result, timepoints, y, ids)
+    @test isa(ll_value, Float64)
+    @test ll_value ≈ result.loglikelihood atol=1e-8
 
 end
 
