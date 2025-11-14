@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Custom Model Components · TemporalMixtureModels.jl</title><meta name="title" content="Custom Model Components · TemporalMixtureModels.jl"/><meta property="og:title" content="Custom Model Components · TemporalMixtureModels.jl"/><meta property="twitter:title" content="Custom Model Components · TemporalMixtureModels.jl"/><meta name="description" content="Documentation for TemporalMixtureModels.jl."/><meta property="og:description" content="Documentation for TemporalMixtureModels.jl."/><meta property="twitter:description" content="Documentation for TemporalMixtureModels.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="TemporalMixtureModels.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">TemporalMixtureModels.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../usage/">Basic Usage</a></li><li><a class="tocitem" href="../multivariate/">Multiple Output Variables</a></li><li><a class="tocitem" href="../bootstrap/">Bootstrapping for Uncertainty Estimation</a></li><li class="is-active"><a class="tocitem" href>Custom Model Components</a><ul class="internal"><li><a class="tocitem" href="#Defining-a-Custom-Component-Model"><span>Defining a Custom Component Model</span></a></li><li><a class="tocitem" href="#Using-the-Custom-Component-Model"><span>Using the Custom Component Model</span></a></li></ul></li><li><a class="tocitem" href="../regularized_regression/">Regularized Regression Components</a></li><li><a class="tocitem" href="../evaluation_metrics/">Evaluation Metrics</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li class="is-active"><a href>Custom Model Components</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Custom Model Components</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/Computational-Biology-TUe/TemporalMixtureModels.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/Computational-Biology-TUe/TemporalMixtureModels.jl/blob/main/docs/src/manual/custom_components.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Using-Custom-Model-Components"><a class="docs-heading-anchor" href="#Using-Custom-Model-Components">Using Custom Model Components</a><a id="Using-Custom-Model-Components-1"></a><a class="docs-heading-anchor-permalink" href="#Using-Custom-Model-Components" title="Permalink"></a></h1><p>In addition to the built-in component models provided by the <code>TemporalMixtureModels.jl</code> package, you can also define your own custom component models to use within the temporal mixture modeling framework. This allows you to tailor the modeling approach to the specific characteristics of your data and research questions. In this section, an example custom component model is implemented to illustrate how to create and use custom components. In this example, we will create an <code>ExponentialDecay</code> component model that fits an exponential decay function to the time series data.</p><h2 id="Defining-a-Custom-Component-Model"><a class="docs-heading-anchor" href="#Defining-a-Custom-Component-Model">Defining a Custom Component Model</a><a id="Defining-a-Custom-Component-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Defining-a-Custom-Component-Model" title="Permalink"></a></h2><p>To define a custom component model, you need to create a new struct that inherits from the <code>Component</code> abstract type. You also need to implement the required methods for the component model, including <code>initialize_parameters</code>, <code>n_parameters</code>, <code>predict</code>, and <code>fit!</code>.</p><h3 id="The-ExponentialDecay-Component"><a class="docs-heading-anchor" href="#The-ExponentialDecay-Component">The ExponentialDecay Component</a><a id="The-ExponentialDecay-Component-1"></a><a class="docs-heading-anchor-permalink" href="#The-ExponentialDecay-Component" title="Permalink"></a></h3><p>The <code>ExponentialDecay</code> component model fits an exponential decay function of the form:</p><p class="math-container">\[y(t) = A \cdot e^{-B \cdot t} + C\]</p><p>The parameters of the model are <code>A</code>, <code>B</code>, and <code>C</code>, which represent the initial value, decay rate, and offset, respectively.</p><pre><code class="language-julia hljs">using TemporalMixtureModels, LinearAlgebra, CairoMakie
+import TemporalMixtureModels: Component, initialize_parameters, n_parameters, predict, fit!
+
+struct ExponentialDecay &lt;: Component
+    # No additional fields needed for this simple model
+end
+
+function n_parameters(::ExponentialDecay)
+    return 3  # A, B, C
+end
+
+function initialize_parameters(::ExponentialDecay)
+    return randn(3) .* 0.1  # Small random initialization
+end
+
+function predict(::ExponentialDecay, params::AbstractVector, t::AbstractVector, inputs=nothing)
+    A, B, C = params
+    return A .* exp.(-B .* t) .+ C
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">predict (generic function with 11 methods)</code></pre><p>These are quite straightforward implementations. The <code>n_parameters</code> function returns the number of parameters in the model, <code>initialize_parameters</code> provides an initial guess for the parameters, and <code>predict</code> computes the predicted values given the parameters and time points. </p><h3 id="Model-Fitting"><a class="docs-heading-anchor" href="#Model-Fitting">Model Fitting</a><a id="Model-Fitting-1"></a><a class="docs-heading-anchor-permalink" href="#Model-Fitting" title="Permalink"></a></h3><p>We also need to implement the <code>fit!</code> method to estimate the parameters from the data. Here, we will use a linearization approach to fit the exponential decay model. We need both an unweighted and a weighted version of the <code>fit!</code> function.</p><pre><code class="language-julia hljs">function fit!(parameters::AbstractVector{T}, ::ExponentialDecay, t::AbstractVector{T}, y::AbstractVecOrMat{T}, ::Any) where T&lt;:Real
+    # Linearize the model: y - C = A * exp(-B * t)
+    # Take logarithm: log(y - C) = log(A) - B * t
+    # This requires y &gt; C, so we need to estimate C first
+    C_est = minimum(y) - 0.1  # Slightly below the minimum observed value
+    y_adjusted = y .- C_est
+    valid_mask = y_adjusted .&gt; 0  # Only consider valid points for log
+
+    if sum(valid_mask) &lt; 2
+        error(&quot;Not enough valid data points to fit ExponentialDecay model.&quot;)
+    end
+
+    log_y = log.(y_adjusted[valid_mask])
+    t_valid = t[valid_mask]
+
+    # Fit linear model: log_y = log(A) - B * t_valid
+    X = hcat(ones(length(t_valid)), -t_valid)
+    coeffs = X \ log_y
+
+    A_est = exp(coeffs[1])
+    B_est = coeffs[2]
+
+    parameters[1] = A_est
+    parameters[2] = B_est
+    parameters[3] = C_est
+end
+
+function fit!(parameters::AbstractVector{T}, ::ExponentialDecay, t::AbstractVector{T}, y::AbstractVecOrMat{T}, w::AbstractVector{T}, ::Any) where T&lt;:Real
+
+    C_est = minimum(y) - 0.1  # Slightly below the minimum observed value
+    y_adjusted = y .- C_est
+    valid_mask = (y_adjusted .&gt; 0) .&amp; (w .&gt; 0)  # Only consider valid points for log and positive weights
+    if sum(valid_mask) &lt; 2
+        error(&quot;Not enough valid data points to fit ExponentialDecay model.&quot;)
+    end
+
+    log_y = log.(y_adjusted[valid_mask])
+    t_valid = t[valid_mask]
+    w_valid = w[valid_mask]
+
+    # Fit weighted linear model: log_y = log(A) - B * t_valid
+    X = hcat(ones(length(t_valid)), -t_valid)
+    W = Diagonal(w_valid)
+    coeffs = (X&#39; * W * X) \ (X&#39; * W * log_y)
+
+    A_est = exp(coeffs[1])
+    B_est = coeffs[2]
+    parameters[1] = A_est
+    parameters[2] = B_est
+    parameters[3] = C_est
+
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">fit! (generic function with 10 methods)</code></pre><h2 id="Using-the-Custom-Component-Model"><a class="docs-heading-anchor" href="#Using-the-Custom-Component-Model">Using the Custom Component Model</a><a id="Using-the-Custom-Component-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Using-the-Custom-Component-Model" title="Permalink"></a></h2><p>Once you have defined your custom component model, you can use it in the same way as the built-in component models. Here is an example of how to fit a temporal mixture model using the <code>ExponentialDecay</code> component:</p><pre><code class="language-julia hljs">using TemporalMixtureModels, Random
+Random.seed!(27052023)  # For reproducibility
+
+# Generate synthetic data
+t, y, ids, class_labels = example_bp_data(;n_subjects_drug=21, n_subjects_placebo=22, n_timepoints=5)
+
+# Define the custom component model
+component_model = ExponentialDecay()
+num_components = 2  # For example, we want to fit 2 clusters
+model = fit_mixture(component_model, num_components, t, y[:, 1], ids)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MixtureResult(Main.ExponentialDecay(), 2, [[50.15254627687537, 0.022915149045249845, 71.15237781307899], [50.120724794418216, 0.2512978898707208, 71.15237781307899]], [[92.76453002163734], [79.99558308496921]], [0.6784869738046425, 0.3215130261953575], [0.07642096335825796 0.923579036641742; 0.012333663556006104 0.9876663364439938; … ; 0.9999999796372858 2.036271414202863e-8; 0.998106833108452 0.0018931668915478277], -812.1395769957758, true, 23, NormalError())</code></pre><p>This will fit a temporal mixture model with 2 <code>ExponentialDecay</code> components to the systolic blood pressure data. You can then make predictions and analyze the fitted model as usual.</p><p>We can use the fitted model to make predictions for new time points:</p><pre><code class="language-julia hljs">new_time_points = 0:0.1:5.0
+predictions = predict(model, new_time_points)</code></pre><p><img src="../systolic_bp_custom.png" alt="systolic_bp_custom"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../bootstrap/">« Bootstrapping for Uncertainty Estimation</a><a class="docs-footer-nextpage" href="../regularized_regression/">Regularized Regression Components »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.0 on <span class="colophon-date" title="Friday 14 November 2025 14:36">Friday 14 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
