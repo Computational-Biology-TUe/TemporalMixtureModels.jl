@@ -1,7 +1,7 @@
 # Home
 
-!!! compat "Version 2.0 Notice"
-    The upgrade from version 1.x to 2.x includes a complete redesign of the API. It is recommended to upgrade to the latest version to benefit from new features and improvements.
+!!! compat "Version 1.0 Notice"
+    The upgrade from version 0.x to 1.x includes a complete redesign of the API. It is recommended to upgrade to the latest version to benefit from new features and improvements.
 
 TemporalMixtureModels.jl is a small Julia package for fitting temporal mixture models to cluster time series data. The package supports both univariate and independent multivariate time series data. The package provides a simple API for fitting models, making predictions, and estimating uncertainty using bootstrap methods. 
 
