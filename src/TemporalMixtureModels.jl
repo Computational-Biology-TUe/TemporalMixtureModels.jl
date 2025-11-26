@@ -7,6 +7,8 @@ module TemporalMixtureModels
     using Hungarian
     using ProgressMeter
     using RequiredInterfaces
+    using Convex
+    using SCS
 
     include("data.jl")
     include("components/core.jl")

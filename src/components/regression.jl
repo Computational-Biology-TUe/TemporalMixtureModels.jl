@@ -159,11 +159,11 @@ end
 
 function fit!(parameters::AbstractVector{T}, model::LassoRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, ::Any) where T<:Real
     Ξ = basis(t, model.degree)
-    parameters .= _fit_lasso_model(Ξ, y[:], model.lambda)
+    parameters .= _fit_lasso_model(Ξ, y[:], model.λ)
 end
 
 function fit!(parameters::AbstractVector{T}, model::LassoRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, w::AbstractVector{T}, ::Any) where T<:Real
     # No need to build W as a matrix
     Ξ = basis(t, model.degree)
-    parameters .= _fit_lasso_model(Ξ, y[:], model.lambda, w)
+    parameters .= _fit_lasso_model(Ξ, y[:], model.λ, w)
 end

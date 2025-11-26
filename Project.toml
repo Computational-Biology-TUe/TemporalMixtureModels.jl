@@ -1,6 +1,6 @@
 name = "TemporalMixtureModels"
 uuid = "04cebb6a-72a2-4d9b-bd91-f7dfea97eb3c"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["max-de-rooij <54850292+max-de-rooij@users.noreply.github.com>"]
 
 [deps]

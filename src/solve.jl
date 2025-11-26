@@ -173,7 +173,6 @@ function fit_weighted!(parameters, component::CompositeComponent,
         Wv_c = Wv[.!missing_mask]
 
         #println(param_range)
-
         if sum(Wv_c) > n_parameters(comp)
             # Fit component with weights
             fit!(view(parameters, param_range), comp, tv, yv, Wv_c, inputs)
@@ -281,6 +280,30 @@ function row_normalize!(mat::Matrix{Float64})
     return nothing
 end
 
+"""
+    cluster_assignments_to_responsibilities(assignments::AbstractVector{Int}, n_clusters::Int)
+
+Convert hard cluster assignments to a responsibility matrix.
+
+# Arguments
+- `assignments`: Vector of cluster assignments (1 to n_clusters) for each subject
+- `n_clusters`: Total number of clusters
+
+# Returns
+- Matrix of responsibilities where each row sums to 1, with 1.0 for the assigned cluster and 0.0 elsewhere
+"""
+function cluster_assignments_to_responsibilities(assignments::AbstractVector{Int}, n_clusters::Int)
+    n_subjects = length(assignments)
+    responsibilities = zeros(Float64, n_subjects, n_clusters)
+    
+    for (i, cluster) in enumerate(assignments)
+        @assert 1 <= cluster <= n_clusters "Cluster assignments must be between 1 and $n_clusters"
+        responsibilities[i, cluster] = 1.0
+    end
+    
+    return responsibilities
+end
+
 # ============================================================================
 # Main Fitting Function
 # ============================================================================
@@ -324,17 +347,22 @@ function _fit_single_mixture(component::Component, n_components::Int,
                      inputs,
                      max_iter::Int,
                      tol::Float64,
-                     verbose::Bool)
+                     verbose::Bool,
+                     initial_responsibilities::Union{Nothing, Matrix{Float64}}=nothing)
     
     # Initialize parameters
     parameters = [initialize_parameters(component) for _ in 1:n_components]
     mixture_weights = ones(n_components) ./ n_components
     
-    # Initialize responsibilities randomly
-    responsibilities = rand(length(unique(data.ids)), n_components)
-    row_normalize!(responsibilities)
-    # resps = rand(length(unique(data.ids)), n_components)
-    # responsibilities[argmax(resps, dims=2)] .= 1.0
+    # Initialize responsibilities
+    if initial_responsibilities === nothing
+        # Random initialization
+        responsibilities = rand(length(unique(data.ids)), n_components)
+        row_normalize!(responsibilities)
+    else
+        # Use provided initial responsibilities
+        responsibilities = copy(initial_responsibilities)
+    end
 
     params_error = error_model_parameters(component, error_model, data, parameters, responsibilities, inputs)
     
@@ -344,19 +372,19 @@ function _fit_single_mixture(component::Component, n_components::Int,
     iter = 0
 
     for iter in 1:max_iter
-        # E-step
-        e_step!(responsibilities, data, component, parameters, 
-                mixture_weights, error_model, params_error, inputs)
-        
-        # M-step
+        # M-step: Update parameters based on current responsibilities
         m_step!(parameters, mixture_weights, data, component, responsibilities, inputs)
 
-        # Update error model parameters
+        # Update error model parameters (part of M-step)
         params_error = error_model_parameters(component, error_model, data, parameters, responsibilities, inputs)
 
-        # Compute log-likelihood
+        # Compute log-likelihood with updated parameters
         loglik = compute_total_loglikelihood(data, component, parameters, params_error,
                                             mixture_weights, error_model, inputs)
+        
+        # E-step: Update responsibilities for next iteration
+        e_step!(responsibilities, data, component, parameters, 
+                mixture_weights, error_model, params_error, inputs)
         
         # Check convergence
         if abs(loglik - prev_loglik) < tol
@@ -410,13 +438,16 @@ function _fit_mixtures(component::Component, n_components::Int,
                      max_iter::Int,
                      tol::Float64,
                      verbose::Bool,
-                     n_repeats::Int)
+                     n_repeats::Int,
+                     initial_responsibilities::Union{Nothing, Matrix{Float64}}=nothing)
     
     results = MixtureResult[]
     for repeat in 1:n_repeats
         verbose && println("Starting EM repeat $repeat/$n_repeats")
+        # Only use initial responsibilities for the first repeat
+        init_resps = (repeat == 1) ? initial_responsibilities : nothing
         result = _fit_single_mixture(
-            component, n_components, data, error_model, inputs, max_iter, tol, verbose
+            component, n_components, data, error_model, inputs, max_iter, tol, verbose, init_resps
         )
         push!(results, result)
     end
@@ -430,7 +461,7 @@ end
 """
     fit_mixture(component, n_components, t, y, ids;
                 n_repeats=5, error_model=NormalError(), inputs=nothing, 
-                max_iter=100, tol=1e-6, verbose=true)
+                max_iter=100, tol=1e-6, verbose=true, initial_assignments=nothing)
 
 Fit a mixture model using the Expectation-Maximization (EM) algorithm. By default, `fit_mixture` will run 5 EM restarts and return the best fitting model based on log-likelihood.
 
@@ -448,6 +479,7 @@ Fit a mixture model using the Expectation-Maximization (EM) algorithm. By defaul
 - `max_iter`: Maximum EM iterations (default: 100)
 - `tol`: Convergence tolerance (default: 1e-6)
 - `verbose`: Print progress (default: true)
+- `initial_assignments`: Optional vector of initial cluster assignments (1 to n_components) for each subject (default: nothing, uses random initialization)
 
 # Returns
 - `MixtureResult` containing fitted parameters and cluster assignments, with fields:
@@ -466,6 +498,10 @@ Fit a mixture model using the Expectation-Maximization (EM) algorithm. By defaul
 ```julia
 # Single measurement with normal errors
 result = fit_mixture(PolynomialRegression(2), 3, t, y, ids)
+
+# With initial cluster assignments
+initial_clusters = [1, 1, 2, 2, 3, 3]  # subjects 1-2 in cluster 1, 3-4 in cluster 2, etc.
+result = fit_mixture(PolynomialRegression(2), 3, t, y, ids; initial_assignments=initial_clusters)
 ```
 """
 function fit_mixture(component::Component, n_components::Int, 
@@ -476,7 +512,8 @@ function fit_mixture(component::Component, n_components::Int,
                      inputs=nothing,
                      max_iter::Int=100,
                      tol::Float64=1e-6,
-                     verbose::Bool=true)
+                     verbose::Bool=true,
+                     initial_assignments::Union{Nothing, AbstractVector{Int}}=nothing)
     
     # Validate inputs
     n_obs, n_variables = size(y)
@@ -485,9 +522,17 @@ function fit_mixture(component::Component, n_components::Int,
     
     data = MixtureData(t, y, ids)
     
+    # Convert initial assignments to responsibilities if provided
+    initial_responsibilities = nothing
+    if initial_assignments !== nothing
+        n_subjects = length(unique(ids))
+        @assert length(initial_assignments) == n_subjects "initial_assignments must have one entry per unique subject (got $(length(initial_assignments)), expected $n_subjects)"
+        initial_responsibilities = cluster_assignments_to_responsibilities(initial_assignments, n_components)
+    end
+    
     return _fit_mixtures(
         component, n_components, data, error_model, inputs, 
-        max_iter, tol, verbose, n_repeats
+        max_iter, tol, verbose, n_repeats, initial_responsibilities
     )
 end
 
@@ -499,16 +544,16 @@ function fit_mixture(component::Component, n_components::Int,
                      inputs=nothing,
                      max_iter::Int=100,
                      tol::Float64=1e-6,
-                     verbose::Bool=true)
+                     verbose::Bool=true,
+                     initial_assignments::Union{Nothing, AbstractVector{Int}}=nothing)
     # Convert y to matrix
     y_matrix = reshape(y, length(y), 1)
     return fit_mixture(component, n_components, t, y_matrix, ids;
-                          n_repeats=n_repeats,
+                       n_repeats=n_repeats,
                        error_model=error_model,
                        inputs=inputs,
                        max_iter=max_iter,
                        tol=tol,
-                       verbose=verbose)
+                       verbose=verbose,
+                       initial_assignments=initial_assignments)
 end
-
-# TODO: Dispatch on initial subject assignment

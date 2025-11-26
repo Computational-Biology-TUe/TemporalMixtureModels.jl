@@ -55,6 +55,54 @@ end
 
 end
 
+@testset "initial cluster assignments" begin
+    individuals_per_group = [10, 15]
+    t_values = 0:0.2:5
+    n_groups = 2
+
+    group_coefficients = [ [3.0, -0.3, 0.02],  # Group 1
+                          [1.0, 0.5, -0.01] ]  # Group 2
+
+    ids, timepoints, measurements = generate_univariate_input_data(individuals_per_group, t_values, n_groups, group_coefficients)
+
+    # Create initial assignments based on true groups
+    n_subjects = individuals_per_group[1] + individuals_per_group[2]
+    initial_assignments = vcat(fill(1, individuals_per_group[1]), fill(2, individuals_per_group[2]))
+
+    model = PolynomialRegression(2)
+    
+    # Test with initial assignments
+    result_with_init = fit_mixture(model, 2, timepoints, measurements, ids; 
+                                    initial_assignments=initial_assignments, 
+                                    n_repeats=1, verbose=false)
+    
+    @test result_with_init.converged == true
+    @test sum(result_with_init.cluster_probs) ≈ 1.0 atol=1e-8
+    @test size(result_with_init.responsibilities) == (n_subjects, 2)
+    
+    # Test without initial assignments for comparison
+    result_random = fit_mixture(model, 2, timepoints, measurements, ids; 
+                                n_repeats=1, verbose=false)
+    
+    @test result_random.converged == true
+    
+    # Both should produce valid results (though potentially different)
+    @test isa(result_with_init.loglikelihood, Float64)
+    @test isa(result_random.loglikelihood, Float64)
+    
+    # Test error handling: wrong number of assignments
+    @test_throws AssertionError fit_mixture(model, 2, timepoints, measurements, ids; 
+                                             initial_assignments=[1, 2, 1], 
+                                             n_repeats=1, verbose=false)
+    
+    # Test error handling: invalid cluster number
+    bad_assignments = vcat(fill(1, individuals_per_group[1]), fill(3, individuals_per_group[2]))
+    @test_throws AssertionError fit_mixture(model, 2, timepoints, measurements, ids; 
+                                             initial_assignments=bad_assignments, 
+                                             n_repeats=1, verbose=false)
+
+end
+
 
 
 
