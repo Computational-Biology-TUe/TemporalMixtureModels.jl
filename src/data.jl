@@ -19,7 +19,7 @@ struct MixtureData{T<:Union{Real, Missing}, Y<:Union{Real, Missing}}
     function MixtureData(t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int}) where {T<:Real, Y<:Union{Real, Missing}}
     length(t) == size(y, 1) || error("Length of t must match number of rows in y")
     length(t) == length(ids) || error("Length of t must match length of ids")
-
+    check_compatible(ids, y)
     # Convert ids to numbered IDs starting from 1
     id_map = Dict{Int, Int}(current_id => new_id for (new_id, current_id) in enumerate(unique(ids)))
     mapped_ids = [id_map[id] for id in ids]
@@ -27,6 +27,24 @@ struct MixtureData{T<:Union{Real, Missing}, Y<:Union{Real, Missing}}
 
     return new{T, Y}(collect(t), collect(y), collect(mapped_ids))
 end
+
+end
+
+function check_compatible(ids::Vector{Int}, y::Matrix{Y}) where {Y}
+
+    # find number of missing entries per id in each column of y
+    unique_ids = unique(ids)
+    n_ids = length(unique_ids)
+    n_cols = size(y, 2)
+    for (i, uid) in enumerate(unique_ids)
+        mask = ids .== uid
+        total_entries = sum(mask)
+        for j in 1:n_cols
+            if total_entries == sum(ismissing.(y[mask, j]))
+                throw(ArgumentError("Subject ID $uid has all missing entries in column $j of y. Make sure each subject has at least one observation per variable."))
+            end
+        end
+    end
 
 end
 
