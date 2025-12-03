@@ -23,6 +23,9 @@ function variance(::NormalError, residuals::AbstractVector{Float64}, responsibil
 end
 
 function loglikelihood(::NormalError, residuals::Vector{Float64}, variance::Float64)
+    if isnan(variance) || variance <= 0.0
+        return -Inf
+    end
     return Distributions.loglikelihood(Normal(0.0, sqrt(variance)), residuals)
 end
 

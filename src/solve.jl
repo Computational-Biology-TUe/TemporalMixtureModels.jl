@@ -75,6 +75,7 @@ function e_step!(responsibilities::Matrix{Float64},
     for subject in unique(data.ids)
 
         tv, yv = subset_view(data, subject)
+        subject_input = inputs === nothing ? nothing : inputs[data.ids .== subject, :]
 
         # find missing observations
         missing_mask = map(i -> any(ismissing, yv[i, :]), axes(yv, 1))
@@ -84,7 +85,7 @@ function e_step!(responsibilities::Matrix{Float64},
         # Compute log probabilities for each cluster
         for k in 1:n_clusters
             log_probs[k] = log(mixture_weights[k]) + component_loglikelihood(
-                component, parameters[k], tv, yv, error_model, params_error[k], inputs
+                component, parameters[k], tv, yv, error_model, params_error[k], subject_input
             )
         end
         
@@ -104,14 +105,14 @@ function e_step!(responsibilities::Matrix{Float64},
     return nothing
 end
 
-function posterior_responsibilities(result::MixtureResult, data::MixtureData)
+function posterior_responsibilities(result::MixtureResult, data::MixtureData, inputs=nothing)
     n_obs = length(unique(data.ids))
     n_clusters = result.n_clusters
     R = zeros(n_obs, n_clusters)
 
     e_step!(R, data, result.component, result.parameters, 
             result.cluster_probs, result.error_model, 
-            result.params_error, nothing)
+            result.params_error, inputs)
 
     return R
 end
@@ -120,7 +121,7 @@ function posterior_responsibilities(result::MixtureResult, t::AbstractVector, y:
 
     data = MixtureData(t, y, ids)
 
-    return posterior_responsibilities(result, data)
+    return posterior_responsibilities(result, data, inputs)
 end
 
 # ============================================================================
@@ -239,6 +240,7 @@ function compute_total_loglikelihood(data::MixtureData,
 
         # get subject data
         tv, yv = subset_view(data, subject)
+        subject_input = inputs === nothing ? nothing : inputs[data.ids .== subject, :]
 
         # find missing observations
         missing_mask = map(i -> any(ismissing, yv[i, :]), axes(yv, 1))
@@ -252,7 +254,7 @@ function compute_total_loglikelihood(data::MixtureData,
             
             # Sum over measurements
             log_prob += component_loglikelihood(
-                component, parameters[k], tv, yv, error_model, params_error[k], inputs
+                component, parameters[k], tv, yv, error_model, params_error[k], subject_input
             )
 
             
@@ -382,6 +384,22 @@ function _fit_single_mixture(component::Component, n_components::Int,
         loglik = compute_total_loglikelihood(data, component, parameters, params_error,
                                             mixture_weights, error_model, inputs)
         
+        if isnan(loglik)
+            converged = false
+            verbose && println("NaN loglikelihood at iteration $iter")
+            return MixtureResult(
+                component,
+                n_components,
+                parameters,
+                params_error,
+                mixture_weights,
+                responsibilities,
+                loglik,
+                converged,
+                iter,
+                error_model
+            )
+        end
         # E-step: Update responsibilities for next iteration
         e_step!(responsibilities, data, component, parameters, 
                 mixture_weights, error_model, params_error, inputs)
