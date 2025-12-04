@@ -132,7 +132,7 @@ function match_components(result::MixtureResult, reference::MixtureResult, data:
     ordering = [assignment[i] for i in 1:K]
     
     return MixtureResult(result.component, result.n_clusters, result.parameters[ordering], 
-                         result.variances[:, ordering], result.cluster_probs[ordering],
+                         result.params_error[ordering], result.cluster_probs[ordering],
                          result.responsibilities[:, ordering], result.loglikelihood,
                          result.converged, result.n_iterations, result.error_model), match_separation(cost)
 end
