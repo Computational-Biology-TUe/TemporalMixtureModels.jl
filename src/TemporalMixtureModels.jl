@@ -16,7 +16,6 @@ module TemporalMixtureModels
     include("composition.jl")
     include("errormodels.jl")
     include("solve.jl")
-    include("blend.jl")
     include("bootstrap.jl")
     include("evaluation.jl")
 
