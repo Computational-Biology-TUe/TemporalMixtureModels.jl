@@ -16,25 +16,27 @@ struct MixtureResult
     error_model::ErrorModel
 end
 
-function predict(result::MixtureResult, t::Real, inputs=nothing)
+function predict(result::MixtureResult, t::Real, inputs = nothing)
     n_clusters = result.n_clusters
     y_preds = [predict(result.component, result.parameters[k], [t], inputs)[1, :] for k in 1:n_clusters]
     return y_preds
 end
 
-function predict(result::MixtureResult, t::AbstractVector, inputs=nothing)
+function predict(result::MixtureResult, t::AbstractVector, inputs = nothing)
     n_clusters = result.n_clusters
     y_preds = [predict(result.component, result.parameters[k], t, inputs) for k in 1:n_clusters]
     return y_preds
 end
 
-function component_loglikelihood(component::Component,
-                                 params::AbstractVector{Float64},
-                                 t::AbstractVector{Float64},
-                                 y::AbstractMatrix{Float64},
-                                 error_model::ErrorModel,
-                                 component_params_error::Vector{Float64},
-                                 inputs)
+function component_loglikelihood(
+        component::Component,
+        params::AbstractVector{Float64},
+        t::AbstractVector{Float64},
+        y::AbstractMatrix{Float64},
+        error_model::ErrorModel,
+        component_params_error::Vector{Float64},
+        inputs
+    )
     y_pred = predict(component, params, t, inputs)
     ll = 0.0
 
@@ -52,18 +54,20 @@ end
 E-step: Compute responsibilities for all subjects and clusters.
 Updates responsibilities matrix in-place.
 """
-function e_step!(responsibilities::Matrix{Float64},
-                data::MixtureData,
-                component::Component,
-                parameters::Vector{Vector{Float64}},
-                mixture_weights::Vector{Float64},
-                error_model::ErrorModel,
-                params_error::Vector{Vector{Float64}},
-                inputs)
-    
+function e_step!(
+        responsibilities::Matrix{Float64},
+        data::MixtureData,
+        component::Component,
+        parameters::Vector{Vector{Float64}},
+        mixture_weights::Vector{Float64},
+        error_model::ErrorModel,
+        params_error::Vector{Vector{Float64}},
+        inputs
+    )
+
     n_clusters = length(parameters)
     log_probs = zeros(n_clusters)
-    
+
     for subject in unique(data.ids)
 
         tv, yv = subset_view(data, subject)
@@ -73,43 +77,45 @@ function e_step!(responsibilities::Matrix{Float64},
         missing_mask = map(i -> any(ismissing, yv[i, :]), axes(yv, 1))
         tv = tv[.!missing_mask]
         yv = Float64.(yv[.!missing_mask, :])
-               
+
         # Compute log probabilities for each cluster
         for k in 1:n_clusters
             log_probs[k] = log(mixture_weights[k]) + component_loglikelihood(
                 component, parameters[k], tv, yv, error_model, params_error[k], subject_input
             )
         end
-        
+
         # Normalize using log-sum-exp trick
         max_log_prob = maximum(log_probs)
         for k in 1:n_clusters
             responsibilities[subject, k] = exp(log_probs[k] - max_log_prob)
         end
-        
+
         # Normalize to sum to 1
         row_sum = sum(view(responsibilities, subject, :))
         for k in 1:n_clusters
             responsibilities[subject, k] /= row_sum
         end
     end
-    
+
     return nothing
 end
 
-function posterior_responsibilities(result::MixtureResult, data::MixtureData, inputs=nothing)
+function posterior_responsibilities(result::MixtureResult, data::MixtureData, inputs = nothing)
     n_obs = length(unique(data.ids))
     n_clusters = result.n_clusters
     R = zeros(n_obs, n_clusters)
 
-    e_step!(R, data, result.component, result.parameters, 
-            result.cluster_probs, result.error_model, 
-            result.params_error, inputs)
+    e_step!(
+        R, data, result.component, result.parameters,
+        result.cluster_probs, result.error_model,
+        result.params_error, inputs
+    )
 
     return R
 end
 
-function posterior_responsibilities(result::MixtureResult, t::AbstractVector, y::AbstractMatrix, ids::AbstractVector; inputs=nothing)
+function posterior_responsibilities(result::MixtureResult, t::AbstractVector, y::AbstractMatrix, ids::AbstractVector; inputs = nothing)
 
     data = MixtureData(t, y, ids)
 
@@ -122,11 +128,13 @@ end
 
 Fit weighted regression for a single cluster using pre-allocated buffers.
 """
-function fit_weighted!(parameters, component::Component,
-                    data::MixtureData,
-                    responsibilities::Matrix{Float64},
-                    k::Int,
-                    inputs)
+function fit_weighted!(
+        parameters, component::Component,
+        data::MixtureData,
+        responsibilities::Matrix{Float64},
+        k::Int,
+        inputs
+    )
 
     Wv = [responsibilities[id, k] for id in data.ids]
 
@@ -135,21 +143,23 @@ function fit_weighted!(parameters, component::Component,
     yv = Float64.(data.y[.!missing_mask, :])
     Wv = Wv[.!missing_mask]
 
-    if sum(Wv) > n_parameters(component)
+    return if sum(Wv) > n_parameters(component)
         # Fit polynomial with weights
         fit!(parameters, component, tv, yv, Wv, inputs)
     else
         # If no samples assigned to this component, reinitialize by fitting to all data
         fit!(parameters, component, tv, yv, inputs)
-        
+
     end
 end
 
-function fit_weighted!(parameters, component::CompositeComponent,
-                               data::MixtureData,
-                               responsibilities::Matrix{Float64},
-                               k::Int,
-                               inputs)
+function fit_weighted!(
+        parameters, component::CompositeComponent,
+        data::MixtureData,
+        responsibilities::Matrix{Float64},
+        k::Int,
+        inputs
+    )
 
     Wv = [responsibilities[id, k] for id in data.ids]
 
@@ -169,6 +179,7 @@ function fit_weighted!(parameters, component::CompositeComponent,
 
     end
 
+    return
 end
 
 """
@@ -178,25 +189,27 @@ end
 M-step: Update parameters and mixing proportions.
 Updates parameters and probs in-place.
 """
-function m_step!(parameters::Vector{Vector{Float64}},
-                probs::AbstractVector{Float64},
-                data::MixtureData,
-                component::Component,
-                responsibilities::Matrix{Float64},
-                inputs)
-    
+function m_step!(
+        parameters::Vector{Vector{Float64}},
+        probs::AbstractVector{Float64},
+        data::MixtureData,
+        component::Component,
+        responsibilities::Matrix{Float64},
+        inputs
+    )
+
     n_clusters = length(parameters)
-    
+
     @inbounds for k in 1:n_clusters
         probs[k] = mean(view(responsibilities, :, k))
     end
-    
+
     @inbounds for k in 1:n_clusters
         fit_weighted!(
             parameters[k], component, data, responsibilities, k, inputs
         )
     end
-    
+
     return nothing
 end
 
@@ -205,16 +218,18 @@ end
 
 Compute total log-likelihood of the mixture model.
 """
-function compute_total_loglikelihood(data::MixtureData,
-                                    component::Component,
-                                    parameters::Vector{Vector{Float64}},
-                                    params_error::Vector{Vector{Float64}},
-                                    probs::Vector{Float64},
-                                    error_model::ErrorModel,
-                                    inputs)
+function compute_total_loglikelihood(
+        data::MixtureData,
+        component::Component,
+        parameters::Vector{Vector{Float64}},
+        params_error::Vector{Vector{Float64}},
+        probs::Vector{Float64},
+        error_model::ErrorModel,
+        inputs
+    )
     loglik = 0.0
     n_clusters = length(parameters)
-    
+
     for subject in unique(data.ids)
 
         tv, yv = subset_view(data, subject)
@@ -223,22 +238,22 @@ function compute_total_loglikelihood(data::MixtureData,
         missing_mask = map(i -> any(ismissing, yv[i, :]), axes(yv, 1))
         tv = tv[.!missing_mask]
         yv = Float64.(yv[.!missing_mask, :])
-        
+
         prob_sum = 0.0
         for k in 1:n_clusters
             log_prob = log(probs[k])
-            
+
             log_prob += component_loglikelihood(
                 component, parameters[k], tv, yv, error_model, params_error[k], subject_input
             )
 
-            
+
             prob_sum += exp(log_prob)
         end
-        
+
         loglik += log(prob_sum)
     end
-    
+
     return loglik
 end
 
@@ -272,19 +287,21 @@ Convert hard cluster assignments to a responsibility matrix.
 function cluster_assignments_to_responsibilities(assignments::AbstractVector{Int}, n_clusters::Int)
     n_subjects = length(assignments)
     responsibilities = zeros(Float64, n_subjects, n_clusters)
-    
+
     for (i, cluster) in enumerate(assignments)
         @assert 1 <= cluster <= n_clusters "Cluster assignments must be between 1 and $n_clusters"
         responsibilities[i, cluster] = 1.0
     end
-    
+
     return responsibilities
 end
 
-function error_model_parameters(component::Component, error_model::NormalError, data::MixtureData, 
-                          parameters::Vector{Vector{Float64}},
-                          responsibilities::Matrix{Float64},
-                          inputs)
+function error_model_parameters(
+        component::Component, error_model::NormalError, data::MixtureData,
+        parameters::Vector{Vector{Float64}},
+        responsibilities::Matrix{Float64},
+        inputs
+    )
 
     n_obs = size(data.y, 1)
     n_variables = size(data.y, 2)
@@ -312,18 +329,20 @@ function error_model_parameters(component::Component, error_model::NormalError, 
     return params_error
 end
 
-function _fit_single_mixture(component::Component, n_components::Int, 
-                     data::MixtureData,
-                     error_model::ErrorModel,
-                     inputs,
-                     max_iter::Int,
-                     tol::Float64,
-                     verbose::Bool,
-                     initial_responsibilities::Union{Nothing, Matrix{Float64}}=nothing)
-    
+function _fit_single_mixture(
+        component::Component, n_components::Int,
+        data::MixtureData,
+        error_model::ErrorModel,
+        inputs,
+        max_iter::Int,
+        tol::Float64,
+        verbose::Bool,
+        initial_responsibilities::Union{Nothing, Matrix{Float64}} = nothing
+    )
+
     parameters = [initialize_parameters(component) for _ in 1:n_components]
     mixture_weights = ones(n_components) ./ n_components
-    
+
     if initial_responsibilities === nothing
         responsibilities = rand(length(unique(data.ids)), n_components)
         row_normalize!(responsibilities)
@@ -332,7 +351,7 @@ function _fit_single_mixture(component::Component, n_components::Int,
     end
 
     params_error = error_model_parameters(component, error_model, data, parameters, responsibilities, inputs)
-    
+
     prev_loglik = -Inf
     converged = false
     iter = 0
@@ -342,9 +361,11 @@ function _fit_single_mixture(component::Component, n_components::Int,
 
         params_error = error_model_parameters(component, error_model, data, parameters, responsibilities, inputs)
 
-        loglik = compute_total_loglikelihood(data, component, parameters, params_error,
-                                            mixture_weights, error_model, inputs)
-        
+        loglik = compute_total_loglikelihood(
+            data, component, parameters, params_error,
+            mixture_weights, error_model, inputs
+        )
+
         if isnan(loglik)
             converged = false
             verbose && println("NaN loglikelihood at iteration $iter")
@@ -361,13 +382,15 @@ function _fit_single_mixture(component::Component, n_components::Int,
                 error_model
             )
         end
-        e_step!(responsibilities, data, component, parameters, 
-                mixture_weights, error_model, params_error, inputs)
-        
+        e_step!(
+            responsibilities, data, component, parameters,
+            mixture_weights, error_model, params_error, inputs
+        )
+
         if abs(loglik - prev_loglik) < tol
             converged = true
             verbose && println("Converged at iteration $iter")
-            verbose && println("Final log-likelihood: $(round(loglik, digits=4))")
+            verbose && println("Final log-likelihood: $(round(loglik, digits = 4))")
             return MixtureResult(
                 component,
                 n_components,
@@ -381,19 +404,19 @@ function _fit_single_mixture(component::Component, n_components::Int,
                 error_model
             )
         end
-        
+
         prev_loglik = loglik
-        
+
         if verbose && (iter % 10 == 0 || iter == 1)
-            println("Iteration $iter: log-likelihood = $(round(loglik, digits=4))")
+            println("Iteration $iter: log-likelihood = $(round(loglik, digits = 4))")
         end
     end
-    
+
     if !converged && verbose
         println("Did not converge after $max_iter iterations")
-        println("Final log-likelihood: $(round(prev_loglik, digits=4))")
+        println("Final log-likelihood: $(round(prev_loglik, digits = 4))")
     end
-    
+
     return MixtureResult(
         component,
         n_components,
@@ -408,16 +431,18 @@ function _fit_single_mixture(component::Component, n_components::Int,
     )
 end
 
-function _fit_mixtures(component::Component, n_components::Int, 
-                     data::MixtureData,
-                     error_model::ErrorModel,
-                     inputs,
-                     max_iter::Int,
-                     tol::Float64,
-                     verbose::Bool,
-                     n_repeats::Int,
-                     initial_responsibilities::Union{Nothing, Matrix{Float64}}=nothing)
-    
+function _fit_mixtures(
+        component::Component, n_components::Int,
+        data::MixtureData,
+        error_model::ErrorModel,
+        inputs,
+        max_iter::Int,
+        tol::Float64,
+        verbose::Bool,
+        n_repeats::Int,
+        initial_responsibilities::Union{Nothing, Matrix{Float64}} = nothing
+    )
+
     results = MixtureResult[]
     for repeat in 1:n_repeats
         verbose && println("Starting EM repeat $repeat/$n_repeats")
@@ -480,53 +505,59 @@ initial_clusters = [1, 1, 2, 2, 3, 3]  # subjects 1-2 in cluster 1, 3-4 in clust
 result = fit_mixture(PolynomialRegression(2), 3, t, y, ids; initial_assignments=initial_clusters)
 ```
 """
-function fit_mixture(component::Component, n_components::Int, 
-                     t::AbstractVector, y::AbstractMatrix, 
-                     ids::AbstractVector;
-                     n_repeats::Int=5,
-                     error_model::ErrorModel=NormalError(),
-                     inputs=nothing,
-                     max_iter::Int=100,
-                     tol::Float64=1e-6,
-                     verbose::Bool=true,
-                     initial_assignments::Union{Nothing, AbstractVector{Int}}=nothing)
-    
+function fit_mixture(
+        component::Component, n_components::Int,
+        t::AbstractVector, y::AbstractMatrix,
+        ids::AbstractVector;
+        n_repeats::Int = 5,
+        error_model::ErrorModel = NormalError(),
+        inputs = nothing,
+        max_iter::Int = 100,
+        tol::Float64 = 1.0e-6,
+        verbose::Bool = true,
+        initial_assignments::Union{Nothing, AbstractVector{Int}} = nothing
+    )
+
     n_obs, n_variables = size(y)
     @assert length(t) == n_obs "Length of t must match number of observations"
     @assert length(ids) == n_obs "Length of ids must match number of observations"
-    
+
     data = MixtureData(t, y, ids)
-    
+
     initial_responsibilities = nothing
     if initial_assignments !== nothing
         n_subjects = length(unique(ids))
         @assert length(initial_assignments) == n_subjects "initial_assignments must have one entry per unique subject (got $(length(initial_assignments)), expected $n_subjects)"
         initial_responsibilities = cluster_assignments_to_responsibilities(initial_assignments, n_components)
     end
-    
+
     return _fit_mixtures(
-        component, n_components, data, error_model, inputs, 
+        component, n_components, data, error_model, inputs,
         max_iter, tol, verbose, n_repeats, initial_responsibilities
     )
 end
 
-function fit_mixture(component::Component, n_components::Int, 
-                     t::AbstractVector, y::AbstractVector, 
-                     ids::AbstractVector;
-                     n_repeats::Int=5,
-                     error_model::ErrorModel=NormalError(),
-                     inputs=nothing,
-                     max_iter::Int=100,
-                     tol::Float64=1e-6,
-                     verbose::Bool=true,
-                     initial_assignments::Union{Nothing, AbstractVector{Int}}=nothing)
+function fit_mixture(
+        component::Component, n_components::Int,
+        t::AbstractVector, y::AbstractVector,
+        ids::AbstractVector;
+        n_repeats::Int = 5,
+        error_model::ErrorModel = NormalError(),
+        inputs = nothing,
+        max_iter::Int = 100,
+        tol::Float64 = 1.0e-6,
+        verbose::Bool = true,
+        initial_assignments::Union{Nothing, AbstractVector{Int}} = nothing
+    )
     y_matrix = reshape(y, length(y), 1)
-    return fit_mixture(component, n_components, t, y_matrix, ids;
-                       n_repeats=n_repeats,
-                       error_model=error_model,
-                       inputs=inputs,
-                       max_iter=max_iter,
-                       tol=tol,
-                       verbose=verbose,
-                       initial_assignments=initial_assignments)
+    return fit_mixture(
+        component, n_components, t, y_matrix, ids;
+        n_repeats = n_repeats,
+        error_model = error_model,
+        inputs = inputs,
+        max_iter = max_iter,
+        tol = tol,
+        verbose = verbose,
+        initial_assignments = initial_assignments
+    )
 end

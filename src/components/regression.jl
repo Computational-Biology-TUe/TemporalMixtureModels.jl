@@ -11,10 +11,10 @@ Polynomial regression component model.
 """
 struct PolynomialRegression <: RegressionComponent
     degree::Int
-    
+
     function PolynomialRegression(degree::Int)
         degree >= 0 || error("Degree must be non-negative")
-        new(degree)
+        return new(degree)
     end
 end
 
@@ -30,11 +30,11 @@ Polynomial regression component model with L2 regularization penalization (Ridge
 struct RidgeRegression <: RegressionComponent
     degree::Int
     λ::Real
-    
+
     function RidgeRegression(degree::Int, λ::Real)
         degree >= 0 || error("Degree must be non-negative")
         λ >= 0 || error("Regularization strength λ must be non-negative")
-        new(degree, λ)
+        return new(degree, λ)
     end
 end
 
@@ -50,15 +50,15 @@ Polynomial regression component model with L1 regularization penalization (Lasso
 struct LassoRegression <: RegressionComponent
     degree::Int
     λ::Real
-    
+
     function LassoRegression(degree::Int, λ::Real)
         degree >= 0 || error("Degree must be non-negative")
         λ >= 0 || error("Regularization strength λ must be non-negative")
-        new(degree, λ)
+        return new(degree, λ)
     end
 end
 
-function basis(t::AbstractVector{T}, degree::Int) where T<:Real
+function basis(t::AbstractVector{T}, degree::Int) where {T <: Real}
     N = length(t)
     X = ones(T, N, degree + 1)
     for d in 1:degree
@@ -74,11 +74,13 @@ function initialize_parameters(m::RegressionComponent)
     return randn(n_parameters(m)) .* 0.1
 end
 
-function predict(m::RegressionComponent, params::AbstractVector, 
-                t::AbstractVector, inputs=nothing)
+function predict(
+        m::RegressionComponent, params::AbstractVector,
+        t::AbstractVector, inputs = nothing
+    )
     n = length(t)
     y_pred = zeros(n)
-    
+
     # Horner's method for polynomial evaluation
     @inbounds for i in 1:n
         ti = t[i]
@@ -88,34 +90,34 @@ function predict(m::RegressionComponent, params::AbstractVector,
         end
         y_pred[i] = result
     end
-    
+
     return y_pred
 end
 
 # Polynomial Regression fitting
-function fit!(parameters::AbstractVector{T}, model::PolynomialRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, ::Any) where T<:Real
+function fit!(parameters::AbstractVector{T}, model::PolynomialRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, ::Any) where {T <: Real}
     Ξ = basis(t, model.degree)
-    parameters .= LS.solve(LS.LinearProblem(Ξ, y[:])).u
+    return parameters .= LS.solve(LS.LinearProblem(Ξ, y[:])).u
 end
 
-function fit!(parameters::AbstractVector{T}, model::PolynomialRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, w::AbstractVector{T}, ::Any) where T<:Real
+function fit!(parameters::AbstractVector{T}, model::PolynomialRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, w::AbstractVector{T}, ::Any) where {T <: Real}
     # No need to build W as a matrix
     Wv = view(w, :)
     Ξ = basis(t, model.degree)
     XTW = transpose(Ξ) .* Wv'
-    parameters .= LS.solve(LS.LinearProblem(XTW * Ξ, XTW * y[:])).u
+    return parameters .= LS.solve(LS.LinearProblem(XTW * Ξ, XTW * y[:])).u
 end
 
 # Ridge Regression fitting
-function fit!(parameters::AbstractVector{T}, model::RidgeRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, ::Any) where T<:Real
+function fit!(parameters::AbstractVector{T}, model::RidgeRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, ::Any) where {T <: Real}
     Ξ = basis(t, model.degree)
     n_params = n_parameters(model)
     A = transpose(Ξ) * Ξ + model.λ * I(n_params)
     b = transpose(Ξ) * y[:]
-    parameters .= LS.solve(LS.LinearProblem(A, b)).u
+    return parameters .= LS.solve(LS.LinearProblem(A, b)).u
 end
 
-function fit!(parameters::AbstractVector{T}, model::RidgeRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, w::AbstractVector{T}, ::Any) where T<:Real
+function fit!(parameters::AbstractVector{T}, model::RidgeRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, w::AbstractVector{T}, ::Any) where {T <: Real}
     # No need to build W as a matrix
     Wv = view(w, :)
     Ξ = basis(t, model.degree)
@@ -123,7 +125,7 @@ function fit!(parameters::AbstractVector{T}, model::RidgeRegression, t::Abstract
     n_params = n_parameters(model)
     A = XTW * Ξ + model.λ * I(n_params)
     b = XTW * y[:]
-    parameters .= LS.solve(LS.LinearProblem(A, b)).u
+    return parameters .= LS.solve(LS.LinearProblem(A, b)).u
 end
 
 # Lasso Regression fitting
@@ -136,14 +138,14 @@ function _fit_lasso_model(Ξ, y, lambda)
     b = Convex.Variable(K)
     obj = Convex.quadform(b, Q) - 2 * Convex.dot(c, b) + lambda * Convex.norm(b, 1)
     problem = Convex.minimize(obj)
-    Convex.solve!(problem, SCS.Optimizer; silent=true)
+    Convex.solve!(problem, SCS.Optimizer; silent = true)
     return vec(Convex.evaluate(b))
 end
 
 function _fit_lasso_model(Ξ, y, lambda, w)
     # using Convex.jl and SCS solver
     T, K = size(Ξ)
-    Xw = Ξ .* w                   
+    Xw = Ξ .* w
     Q = (Ξ' * Xw) / T
     c = (Ξ' * (w .* y)) / T
 
@@ -153,17 +155,17 @@ function _fit_lasso_model(Ξ, y, lambda, w)
     b = Convex.Variable(K)
     obj = Convex.quadform(b, Q) - 2 * Convex.dot(c, b) + lambda * Convex.norm(b, 1)
     problem = Convex.minimize(obj)
-    Convex.solve!(problem, SCS.Optimizer; silent=true)
+    Convex.solve!(problem, SCS.Optimizer; silent = true)
     return vec(Convex.evaluate(b))
 end
 
-function fit!(parameters::AbstractVector{T}, model::LassoRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, ::Any) where T<:Real
+function fit!(parameters::AbstractVector{T}, model::LassoRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, ::Any) where {T <: Real}
     Ξ = basis(t, model.degree)
-    parameters .= _fit_lasso_model(Ξ, y[:], model.λ)
+    return parameters .= _fit_lasso_model(Ξ, y[:], model.λ)
 end
 
-function fit!(parameters::AbstractVector{T}, model::LassoRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, w::AbstractVector{T}, ::Any) where T<:Real
+function fit!(parameters::AbstractVector{T}, model::LassoRegression, t::AbstractVector{T}, y::AbstractVecOrMat{T}, w::AbstractVector{T}, ::Any) where {T <: Real}
     # No need to build W as a matrix
     Ξ = basis(t, model.degree)
-    parameters .= _fit_lasso_model(Ξ, y[:], model.λ, w)
+    return parameters .= _fit_lasso_model(Ξ, y[:], model.λ, w)
 end

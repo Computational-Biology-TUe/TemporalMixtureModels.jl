@@ -34,15 +34,17 @@ Run bootstrap resampling to estimate confidence intervals for the coefficients o
 - `bootstrap_results::Vector{MixtureResult}`: A vector of `MixtureResult` objects from each bootstrap sample.
 - `ambiguities_detected::Int`: The number of ambiguities detected during component matching in the bootstrap resampling. A high number may indicate unreliable confidence intervals due to uncertain sample assignment to components.
 """
-function bootstrap(component::Component, n_components::Int, n_bootstrap::Int, t::AbstractVector, y::AbstractMatrix, ids::AbstractVector;
-    n_repeats::Int=5,
-    error_model::ErrorModel=NormalError(),
-    inputs=nothing,
-    max_iter::Int=100,
-    tol::Float64=1e-6,
-    separation_threshold::Float64=0.01,
-    rng::AbstractRNG=Random.GLOBAL_RNG,
-    show_progress_bar::Bool=true)
+function bootstrap(
+        component::Component, n_components::Int, n_bootstrap::Int, t::AbstractVector, y::AbstractMatrix, ids::AbstractVector;
+        n_repeats::Int = 5,
+        error_model::ErrorModel = NormalError(),
+        inputs = nothing,
+        max_iter::Int = 100,
+        tol::Float64 = 1.0e-6,
+        separation_threshold::Float64 = 0.01,
+        rng::AbstractRNG = Random.GLOBAL_RNG,
+        show_progress_bar::Bool = true
+    )
 
     # prepare data
     data = MixtureData(t, y, ids)
@@ -50,7 +52,7 @@ function bootstrap(component::Component, n_components::Int, n_bootstrap::Int, t:
 
     # fit initial model
     reference = _fit_mixtures(
-        component, n_components, data, error_model, inputs, 
+        component, n_components, data, error_model, inputs,
         max_iter, tol, false, n_repeats
     )
 
@@ -58,18 +60,19 @@ function bootstrap(component::Component, n_components::Int, n_bootstrap::Int, t:
     ambiguities_detected = 0
 
     if show_progress_bar
-        prog_bar = Progress(n_bootstrap; desc="Running bootstrap resampling...")
+        prog_bar = Progress(n_bootstrap; desc = "Running bootstrap resampling...")
     end
 
     for b in 1:n_bootstrap
 
         # sample with replacement
-        sampled_data = sample_subset_with_replacement(data, n; rng=rng)
+        sampled_data = sample_subset_with_replacement(data, n; rng = rng)
 
         # fit mixture model
         result = _fit_mixtures(
-        component, n_components, sampled_data, error_model, inputs, 
-        max_iter, tol, false, n_repeats)
+            component, n_components, sampled_data, error_model, inputs,
+            max_iter, tol, false, n_repeats
+        )
 
         # match components to prevent label switching
         matched_result, separation = match_components(result, reference, data)
@@ -92,28 +95,30 @@ function bootstrap(component::Component, n_components::Int, n_bootstrap::Int, t:
     return bootstrap_results, ambiguities_detected
 end
 
-function bootstrap(component::Component, n_components::Int, n_bootstrap::Int, t::AbstractVector, y::AbstractVector, ids::AbstractVector;
-    n_repeats::Int=5,
-    error_model::ErrorModel=NormalError(),
-    inputs=nothing,
-    max_iter::Int=100,
-    tol::Float64=1e-6,
-    separation_threshold::Float64=0.01,
-    rng::AbstractRNG=Random.GLOBAL_RNG,
-    show_progress_bar::Bool=true)
+function bootstrap(
+        component::Component, n_components::Int, n_bootstrap::Int, t::AbstractVector, y::AbstractVector, ids::AbstractVector;
+        n_repeats::Int = 5,
+        error_model::ErrorModel = NormalError(),
+        inputs = nothing,
+        max_iter::Int = 100,
+        tol::Float64 = 1.0e-6,
+        separation_threshold::Float64 = 0.01,
+        rng::AbstractRNG = Random.GLOBAL_RNG,
+        show_progress_bar::Bool = true
+    )
 
     # Convert y to matrix
     y_matrix = reshape(y, length(y), 1)
     return bootstrap(
         component, n_components, n_bootstrap, t, y_matrix, ids;
-        n_repeats=n_repeats,
-        error_model=error_model,
-        inputs=inputs,
-        max_iter=max_iter,
-        tol=tol,
-        separation_threshold=separation_threshold,
-        rng=rng,
-        show_progress_bar=show_progress_bar
+        n_repeats = n_repeats,
+        error_model = error_model,
+        inputs = inputs,
+        max_iter = max_iter,
+        tol = tol,
+        separation_threshold = separation_threshold,
+        rng = rng,
+        show_progress_bar = show_progress_bar
     )
 end
 
@@ -126,18 +131,20 @@ function match_components(result::MixtureResult, reference::MixtureResult, data:
 
     cost = zeros(eltype(R_model), K, K)
     for k in 1:K, l in 1:K
-        cost[k,l] = -sum(R_ref[:,k] .* R_model[:,l])
+        cost[k, l] = -sum(R_ref[:, k] .* R_model[:, l])
     end
     assignment, _ = hungarian(cost)
     ordering = [assignment[i] for i in 1:K]
-    
-    return MixtureResult(result.component, result.n_clusters, result.parameters[ordering], 
-                         result.params_error[ordering], result.cluster_probs[ordering],
-                         result.responsibilities[:, ordering], result.loglikelihood,
-                         result.converged, result.n_iterations, result.error_model), match_separation(cost)
+
+    return MixtureResult(
+            result.component, result.n_clusters, result.parameters[ordering],
+            result.params_error[ordering], result.cluster_probs[ordering],
+            result.responsibilities[:, ordering], result.loglikelihood,
+            result.converged, result.n_iterations, result.error_model
+        ), match_separation(cost)
 end
 
-function match_separation(cost::Matrix{T}) where T
+function match_separation(cost::Matrix{T}) where {T}
     scores = zeros(T, size(cost, 1))
     for i in axes(cost, 1)
         best, second = -1 .* partialsort(cost[i, :], 1:2)
@@ -145,5 +152,3 @@ function match_separation(cost::Matrix{T}) where T
     end
     return scores .- T(1.0)
 end
-
-
