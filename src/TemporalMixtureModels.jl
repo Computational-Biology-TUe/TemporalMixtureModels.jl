@@ -1,48 +1,47 @@
 module TemporalMixtureModels
-    using Random
-    using Distributions
-    using LinearAlgebra
-    using Statistics
-    import LinearSolve as LS
-    using Hungarian
-    using ProgressMeter
-    using RequiredInterfaces
-    using Convex
-    using SCS
+using Random
+using Distributions
+using LinearAlgebra
+using Statistics
+import LinearSolve as LS
+using Hungarian
+using ProgressMeter
+using RequiredInterfaces
+import Convex
+using SCS
 
-    include("data.jl")
-    include("components/core.jl")
-    include("components/regression.jl")
-    include("composition.jl")
-    include("errormodels.jl")
-    include("solve.jl")
-    include("bootstrap.jl")
-    include("evaluation.jl")
+include("data.jl")
+include("components/core.jl")
+include("components/regression.jl")
+include("composition.jl")
+include("errormodels.jl")
+include("solve.jl")
+include("bootstrap.jl")
+include("evaluation.jl")
 
-    # sample data for testing and examples
-    export example_bp_data
+# sample data for testing and examples
+export example_bp_data
 
-    # components base
-    export Component, n_parameters, initialize_parameters, fit!
-    
-    # regression components
-    export PolynomialRegression, RidgeRegression, LassoRegression
+# components base
+export Component, n_parameters, initialize_parameters, fit!
 
-    # composition
-    export CompositeComponent, @component
+# regression components
+export PolynomialRegression, RidgeRegression, LassoRegression
 
-    # error models
-    export ErrorModel, NormalError
+# composition
+export CompositeComponent, @component
 
-    # solving mixture models
-    export fit_mixture, predict, posterior_responsibilities
-    export MixtureResult, MixtureData
-    
-    # bootstrap
-    export bootstrap
+# error models
+export ErrorModel, NormalError
 
-    # evaluation metrics
-    export loglikelihood, aic, bic
-    
+# solving mixture models
+export fit_mixture, predict, posterior_responsibilities
+export MixtureResult, MixtureData
+
+# bootstrap
+export bootstrap
+
+# evaluation metrics
+export loglikelihood, aic, bic
+
 end # module TemporalMixtureModels
-

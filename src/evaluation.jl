@@ -11,35 +11,37 @@ function total_free_parameters(result::MixtureResult)
     return n_params
 end
 
-function loglikelihood(result::MixtureResult, data::MixtureData; inputs=nothing)
-    loglik = compute_total_loglikelihood(data, result.component, result.parameters, result.params_error,
-                                            result.cluster_probs, result.error_model, inputs)
+function loglikelihood(result::MixtureResult, data::MixtureData; inputs = nothing)
+    loglik = compute_total_loglikelihood(
+        data, result.component, result.parameters, result.params_error,
+        result.cluster_probs, result.error_model, inputs
+    )
     return loglik
 end
 
-function aic(result::MixtureResult, data::MixtureData; inputs=nothing)
+function aic(result::MixtureResult, data::MixtureData; inputs = nothing)
     k = total_free_parameters(result)
-    ll = loglikelihood(result, data; inputs=inputs)
+    ll = loglikelihood(result, data; inputs = inputs)
     return 2k - 2ll
 end
 
-function bic(result::MixtureResult, data::MixtureData; inputs=nothing)
+function bic(result::MixtureResult, data::MixtureData; inputs = nothing)
     k = total_free_parameters(result)
     n = size(data.y, 1)
-    ll = loglikelihood(result, data; inputs=inputs)
-    return log(n)*k - 2ll
+    ll = loglikelihood(result, data; inputs = inputs)
+    return log(n) * k - 2ll
 end
 
-function loglikelihood(result::MixtureResult, t::AbstractVector{T}, y::AbstractVector{Y}, ids::AbstractVector{Int}; inputs=nothing) where {T<:Real, Y<:Union{Real, Missing}}
-    return loglikelihood(result, MixtureData(t, reshape(y, :, 1), ids); inputs=inputs)
+function loglikelihood(result::MixtureResult, t::AbstractVector{T}, y::AbstractVector{Y}, ids::AbstractVector{Int}; inputs = nothing) where {T <: Real, Y <: Union{Real, Missing}}
+    return loglikelihood(result, MixtureData(t, reshape(y, :, 1), ids); inputs = inputs)
 end
 
-function aic(result::MixtureResult, t::AbstractVector{T}, y::AbstractVector{Y}, ids::AbstractVector{Int}; inputs=nothing) where {T<:Real, Y<:Union{Real, Missing}}  
-    return aic(result, MixtureData(t, reshape(y, :, 1), ids); inputs=inputs)
+function aic(result::MixtureResult, t::AbstractVector{T}, y::AbstractVector{Y}, ids::AbstractVector{Int}; inputs = nothing) where {T <: Real, Y <: Union{Real, Missing}}
+    return aic(result, MixtureData(t, reshape(y, :, 1), ids); inputs = inputs)
 end
 
-function bic(result::MixtureResult, t::AbstractVector{T}, y::AbstractVector{Y}, ids::AbstractVector{Int}; inputs=nothing) where {T<:Real, Y<:Union{Real, Missing}}
-    return bic(result, MixtureData(t, reshape(y, :, 1), ids); inputs=inputs)
+function bic(result::MixtureResult, t::AbstractVector{T}, y::AbstractVector{Y}, ids::AbstractVector{Int}; inputs = nothing) where {T <: Real, Y <: Union{Real, Missing}}
+    return bic(result, MixtureData(t, reshape(y, :, 1), ids); inputs = inputs)
 end
 
 """
@@ -57,10 +59,12 @@ Compute the total log-likelihood of the fitted mixture model on the given data.
 # Returns
 - `Float64`: The total log-likelihood of the model on the data.
 """
-function loglikelihood(result::MixtureResult, t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int};
-                        inputs=nothing) where {T<:Real, Y<:Union{Real, Missing}}
+function loglikelihood(
+        result::MixtureResult, t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int};
+        inputs = nothing
+    ) where {T <: Real, Y <: Union{Real, Missing}}
     data = MixtureData(t, y, ids)
-    return loglikelihood(result, data; inputs=inputs)
+    return loglikelihood(result, data; inputs = inputs)
 end
 
 """
@@ -78,10 +82,12 @@ Compute the Akaike information criterion of the fitted mixture model on the give
 # Returns
 - `Float64`: The Akaike information criterion of the model on the data.
 """
-function aic(result::MixtureResult, t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int};
-                inputs=nothing) where {T<:Real, Y<:Union{Real, Missing}}
+function aic(
+        result::MixtureResult, t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int};
+        inputs = nothing
+    ) where {T <: Real, Y <: Union{Real, Missing}}
     data = MixtureData(t, y, ids)
-    return aic(result, data; inputs=inputs)
+    return aic(result, data; inputs = inputs)
 end
 
 
@@ -100,8 +106,10 @@ Compute the Bayesian information criterion of the fitted mixture model on the gi
 # Returns
 - `Float64`: The Bayesian information criterion of the model on the data.
 """
-function bic(result::MixtureResult, t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int};
-                inputs=nothing) where {T<:Real, Y<:Union{Real, Missing}}
+function bic(
+        result::MixtureResult, t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int};
+        inputs = nothing
+    ) where {T <: Real, Y <: Union{Real, Missing}}
     data = MixtureData(t, y, ids)
-    return bic(result, data; inputs=inputs)
+    return bic(result, data; inputs = inputs)
 end

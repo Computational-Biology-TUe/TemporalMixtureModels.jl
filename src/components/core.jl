@@ -16,6 +16,6 @@ function fit! end
     n_parameters(::Component)
     initialize_parameters(::Component)
     predict(::Component, ::AbstractVector, ::AbstractVector, ::Any)
-    fit!(::AbstractVector, ::Component, ::AbstractVector,::AbstractArray, ::Any)
+    fit!(::AbstractVector, ::Component, ::AbstractVector, ::AbstractArray, ::Any)
     fit!(::AbstractVector, ::Component, ::AbstractVector, ::AbstractArray, ::AbstractVector, ::Any)
 end

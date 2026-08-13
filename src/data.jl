@@ -11,22 +11,22 @@ All missing data is handled during construction.
 - `n_total_obs`: Total number of observations
 - `id_to_idx`: Dictionary mapping subject ID to index
 """
-struct MixtureData{T<:Union{Real, Missing}, Y<:Union{Real, Missing}} 
+struct MixtureData{T <: Union{Real, Missing}, Y <: Union{Real, Missing}}
     t::Vector{T}
     y::Matrix{Y}
     ids::Vector{Int}
 
-    function MixtureData(t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int}) where {T<:Real, Y<:Union{Real, Missing}}
-    length(t) == size(y, 1) || error("Length of t must match number of rows in y")
-    length(t) == length(ids) || error("Length of t must match length of ids")
-    check_compatible(ids, y)
-    # Convert ids to numbered IDs starting from 1
-    id_map = Dict{Int, Int}(current_id => new_id for (new_id, current_id) in enumerate(unique(ids)))
-    mapped_ids = [id_map[id] for id in ids]
+    function MixtureData(t::AbstractVector{T}, y::AbstractMatrix{Y}, ids::AbstractVector{Int}) where {T <: Real, Y <: Union{Real, Missing}}
+        length(t) == size(y, 1) || error("Length of t must match number of rows in y")
+        length(t) == length(ids) || error("Length of t must match length of ids")
+        check_compatible(ids, y)
+        # Convert ids to numbered IDs starting from 1
+        id_map = Dict{Int, Int}(current_id => new_id for (new_id, current_id) in enumerate(unique(ids)))
+        mapped_ids = [id_map[id] for id in ids]
 
 
-    return new{T, Y}(collect(t), collect(y), collect(mapped_ids))
-end
+        return new{T, Y}(collect(t), collect(y), collect(mapped_ids))
+    end
 
 end
 
@@ -46,6 +46,7 @@ function check_compatible(ids::Vector{Int}, y::Matrix{Y}) where {Y}
         end
     end
 
+    return
 end
 
 """
@@ -76,7 +77,7 @@ function subject_data(data::MixtureData, subject_id::Int)
     return copy(data.t[mask]), copy(data.y[mask, :]), copy(data.ids[mask])
 end
 
-function sample_subset_with_replacement(data::MixtureData, n_ids::Int; rng::AbstractRNG=Random.GLOBAL_RNG)
+function sample_subset_with_replacement(data::MixtureData, n_ids::Int; rng::AbstractRNG = Random.GLOBAL_RNG)
 
     # sample subject IDs with replacement
     unique_ids = unique(data.ids)
@@ -117,7 +118,7 @@ using TemporalMixtureModels: example_bp_data
 t, y, ids, class_labels = example_bp_data(n_subjects_drug=30, n_subjects_placebo=30, n_timepoints=4)
 ```
 """
-function example_bp_data(;n_subjects_drug=50, n_subjects_placebo=50, n_timepoints=5, rng::AbstractRNG=Random.GLOBAL_RNG)
+function example_bp_data(; n_subjects_drug = 50, n_subjects_placebo = 50, n_timepoints = 5, rng::AbstractRNG = Random.GLOBAL_RNG)
 
     ids = Int[]
     t = Float64[]
@@ -129,42 +130,42 @@ function example_bp_data(;n_subjects_drug=50, n_subjects_placebo=50, n_timepoint
 
     for i in 1:n_subjects_drug
 
-        base_sys = 120 + randn(rng)*5
-        base_dia = 80 + randn(rng)*3
+        base_sys = 120 + randn(rng) * 5
+        base_dia = 80 + randn(rng) * 3
 
         for j in tp
 
-            random_noise_sys = randn(rng)*5.1
-            random_noise_dia = randn(rng)*3.2
+            random_noise_sys = randn(rng) * 5.1
+            random_noise_dia = randn(rng) * 3.2
 
-            effect_noise_sys = randn(rng)*0.3
-            effect_noise_dia = randn(rng)*0.14
+            effect_noise_sys = randn(rng) * 0.3
+            effect_noise_dia = randn(rng) * 0.14
             push!(ids, i)
             push!(t, Float64(j))
-            systolic = base_sys - 8.8*j*(1+effect_noise_sys) + 0.8*j^2 + random_noise_sys
-            diastolic = base_dia - 6.43*j*(1+effect_noise_dia) + 0.64*j^2 + random_noise_dia
+            systolic = base_sys - 8.8 * j * (1 + effect_noise_sys) + 0.8 * j^2 + random_noise_sys
+            diastolic = base_dia - 6.43 * j * (1 + effect_noise_dia) + 0.64 * j^2 + random_noise_dia
             push!(bp_sys, systolic)
             push!(bp_dia, diastolic)
             push!(class_labels, 1)
         end
     end
 
-    for i in n_subjects_drug+1:n_subjects_drug+n_subjects_placebo
+    for i in (n_subjects_drug + 1):(n_subjects_drug + n_subjects_placebo)
 
-        base_sys = 120 + randn(rng)*5
-        base_dia = 80 + randn(rng)*3
+        base_sys = 120 + randn(rng) * 5
+        base_dia = 80 + randn(rng) * 3
 
         for j in tp
 
-            random_noise_sys = randn(rng)*5.1
-            random_noise_dia = randn(rng)*3.2
+            random_noise_sys = randn(rng) * 5.1
+            random_noise_dia = randn(rng) * 3.2
 
-            effect_noise_sys = randn(rng)*0.3
-            effect_noise_dia = randn(rng)*0.14
+            effect_noise_sys = randn(rng) * 0.3
+            effect_noise_dia = randn(rng) * 0.14
             push!(ids, i)
             push!(t, Float64(j))
-            systolic = base_sys - j*effect_noise_sys + random_noise_sys
-            diastolic = base_dia - j*effect_noise_dia + random_noise_dia
+            systolic = base_sys - j * effect_noise_sys + random_noise_sys
+            diastolic = base_dia - j * effect_noise_dia + random_noise_dia
             push!(bp_sys, systolic)
             push!(bp_dia, diastolic)
             push!(class_labels, 0)
