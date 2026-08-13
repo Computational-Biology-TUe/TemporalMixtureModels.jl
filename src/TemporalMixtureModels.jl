@@ -7,7 +7,7 @@ module TemporalMixtureModels
     using Hungarian
     using ProgressMeter
     using RequiredInterfaces
-    using Convex
+    import Convex
     using SCS
 
     include("data.jl")
@@ -16,6 +16,7 @@ module TemporalMixtureModels
     include("composition.jl")
     include("errormodels.jl")
     include("solve.jl")
+    include("blend.jl")
     include("bootstrap.jl")
     include("evaluation.jl")
 

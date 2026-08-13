@@ -11,3 +11,7 @@ end
 @testset "Multivariate Mixture Models" begin
     include("multivariate.jl")
 end
+
+@testset "Custom Multivariate Mixture Models" begin
+    include("custom_multivariate.jl")
+end

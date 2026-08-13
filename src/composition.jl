@@ -44,7 +44,7 @@ Predict using composite component (optimized version)
 function predict(m::CompositeComponent, params::AbstractVector, 
                 t::AbstractVector, inputs=nothing)
     n_obs = length(t)
-    n_measurements = length(m.components)
+    n_measurements = sum(length, m.y_ranges)  
     y_pred = zeros(n_obs, n_measurements)
     
     for (y_range, param_range, comp) in zip(m.y_ranges, m.param_ranges, m.components)
