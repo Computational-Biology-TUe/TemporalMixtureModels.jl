@@ -337,14 +337,15 @@ function _fit_single_mixture(
         max_iter::Int,
         tol::Float64,
         verbose::Bool,
-        initial_responsibilities::Union{Nothing, Matrix{Float64}} = nothing
+        initial_responsibilities::Union{Nothing, Matrix{Float64}} = nothing,
+        rng = default_rng()
     )
 
     parameters = [initialize_parameters(component) for _ in 1:n_components]
     mixture_weights = ones(n_components) ./ n_components
 
     if initial_responsibilities === nothing
-        responsibilities = rand(length(unique(data.ids)), n_components)
+        responsibilities = rand(rng, length(unique(data.ids)), n_components)
         row_normalize!(responsibilities)
     else
         responsibilities = copy(initial_responsibilities)
@@ -440,7 +441,8 @@ function _fit_mixtures(
         tol::Float64,
         verbose::Bool,
         n_repeats::Int,
-        initial_responsibilities::Union{Nothing, Matrix{Float64}} = nothing
+        initial_responsibilities::Union{Nothing, Matrix{Float64}} = nothing,
+        rng::AbstractRNG = default_rng()
     )
 
     results = MixtureResult[]
@@ -449,7 +451,7 @@ function _fit_mixtures(
         # Only use initial responsibilities for the first repeat
         init_resps = (repeat == 1) ? initial_responsibilities : nothing
         result = _fit_single_mixture(
-            component, n_components, data, error_model, inputs, max_iter, tol, verbose, init_resps
+            component, n_components, data, error_model, inputs, max_iter, tol, verbose, init_resps, rng
         )
         push!(results, result)
     end
@@ -481,6 +483,7 @@ Fit a mixture model using the Expectation-Maximization (EM) algorithm. By defaul
 - `tol`: Convergence tolerance (default: 1e-6)
 - `verbose`: Print progress (default: true)
 - `initial_assignments`: Optional vector of initial cluster assignments (1 to n_components) for each subject (default: nothing, uses random initialization)
+- `rng`: Random number generator used (default: default_rng(), ignored for the first repeat if `initial_assignments` is specified)
 
 # Returns
 - `MixtureResult` containing fitted parameters and cluster assignments, with fields:
@@ -515,7 +518,8 @@ function fit_mixture(
         max_iter::Int = 100,
         tol::Float64 = 1.0e-6,
         verbose::Bool = true,
-        initial_assignments::Union{Nothing, AbstractVector{Int}} = nothing
+        initial_assignments::Union{Nothing, AbstractVector{Int}} = nothing,
+        rng::AbstractRNG = default_rng()
     )
 
     n_obs, n_variables = size(y)
@@ -547,7 +551,8 @@ function fit_mixture(
         max_iter::Int = 100,
         tol::Float64 = 1.0e-6,
         verbose::Bool = true,
-        initial_assignments::Union{Nothing, AbstractVector{Int}} = nothing
+        initial_assignments::Union{Nothing, AbstractVector{Int}} = nothing,
+        rng::AbstractRNG = default_rng()
     )
     y_matrix = reshape(y, length(y), 1)
     return fit_mixture(
@@ -558,6 +563,7 @@ function fit_mixture(
         max_iter = max_iter,
         tol = tol,
         verbose = verbose,
-        initial_assignments = initial_assignments
+        initial_assignments = initial_assignments,
+        rng = rng
     )
 end
